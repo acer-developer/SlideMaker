@@ -381,21 +381,13 @@ export default function Home() {
   );
 }
 
-function getApiUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  // On live deployment (not localhost) fall back to the Render backend
-  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
-    return 'https://slidemaker-backend.onrender.com';
-  }
-  return 'http://localhost:4000';
-}
-
 async function generateInsightsFromServer(block: ChartBlockType): Promise<Partial<ChartBlockType>> {
-  const apiUrl     = getApiUrl();
+  // Always use the relative Next.js proxy route — works on localhost AND Vercel
+  // The proxy reads BACKEND_URL server-side so the browser never needs the Render URL
   const provider   = localStorage.getItem("slidemaker_provider") || "openrouter";
   const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
   const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);
-  const res = await fetch(`${apiUrl}/api/generate`, {
+  const res = await fetch(`/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
