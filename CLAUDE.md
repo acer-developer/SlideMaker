@@ -50,7 +50,7 @@ projects/slidemaker/
 
 ## User Flow
 
-1. User opens the app and clicks the key icon in the header to enter their OpenRouter and/or NVIDIA NIM API keys (saved to localStorage -- never sent to any backend).
+1. User opens the app and clicks the **BYOK** button (bot icon, top-right of header) to open the BYOK modal. They select a provider (OpenRouter or NVIDIA NIM) and enter their API key (saved to localStorage). The button shows red when no key is saved, teal when a key is present.
 2. User fills in one to four chart blocks. Each block has:
    - **Data** -- paste CSV/text or upload a .csv/.xlsx/.txt file
    - **Context** -- what the data represents (up to 1200 chars), required for AI
@@ -66,15 +66,32 @@ projects/slidemaker/
 
 ## AI / BYOK
 
-- **Primary**: OpenRouter free tier -- `meta-llama/llama-3.3-70b-instruct:free`, 200 req/day per key
-- **Fallback**: NVIDIA NIM free tier -- `meta/llama-3.1-70b-instruct`, 1000 credits/month per key
-- Keys are stored in `localStorage` under `slidemaker_settings`
-- The app tries OpenRouter first; if the key is absent or the call fails it falls back to NVIDIA NIM
-- 6 team members each use their own free key -- no shared quota, no backend rate-limit collisions
+Architecture: frontend sends data to Express backend (`/api/generate`). Backend calls OpenRouter or NVIDIA NIM using either the user's BYOK key (from request body) or server-side env vars as fallback.
+
+- **Primary model**: OpenRouter `meta-llama/llama-3.3-70b-instruct:free`
+- **Fallback model**: NVIDIA NIM `meta/llama-3.1-70b-instruct`
+- **BYOK keys** stored in `localStorage`:
+  - `slidemaker_provider` -- `"openrouter"` or `"nvidia"`
+  - `slidemaker_openrouter_key` -- user's OpenRouter API key
+  - `slidemaker_nvidia_key` -- user's NVIDIA NIM API key
+- If a BYOK key is present, it is sent in the POST body (`{ apiKey, provider }`). Backend uses it directly and returns an error if it fails (no silent fallback for BYOK).
+- If no BYOK key: backend uses `OPENROUTER_API_KEY` env var, then `NVIDIA_API_KEY` env var as fallback.
+- Server env vars are set in Render dashboard and never exposed to the frontend.
+
+**AI response fields** (7 structured fields):
+- `slideSubtitle` -- macro story sentence for slide header
+- `kpiTitle` -- 2-4 word noun phrase
+- `kpiSubtitle` -- one data-backed sentence with exact metric
+- `kpiDescription` -- 2-3 consulting-grade sentences
+- `kpiIcon` -- single emoji
+- `source` -- data source name (only if explicitly mentioned)
+- `annotations[]` -- 3 period annotations with `period`, `label`, `description`, `icon`
+- `insights[]` -- 4-5 bullets with `[[keyword]]` syntax for teal highlighting
 
 **AI prompt rules:**
-- "Do not use em dashes in your response"
-- `parseInsights()` additionally strips any surviving em dashes or en dashes to hyphens
+- No em dashes or en dashes -- use hyphens
+- `parseResponse()` in `server.js` strips surviving em/en dashes to hyphens
+- `[[keyword]]` syntax renders as teal bold via `HighlightText` component in SlideCanvas; stripped to plain text in PPT export
 
 ---
 
@@ -97,13 +114,16 @@ Canvas is always **794 x 1123 px** (A4 at 96 dpi).
 
 | Zone | Height | Style |
 |---|---|---|
-| Header bar | 72 px | Dark teal (#1A4A4C), slide title from blocks[0].context |
+| Header bar | 70 px | White bg, bold dark title + AI `slideSubtitle`, 3px teal bottom border |
 | Content area | flex-fill | White |
-| Footer | 36 px | Dark teal, "SLIDEMAKER" |
+| Key Takeaways | dynamic | Light teal gradient, ✓ bullets with `[[keyword]]` teal highlights |
+| Bottom accent | 3 px | Teal strip (no footer) |
 
-**Single chart (1 block):** horizontal split -- chart card (fills width minus 180 px gap) + KPI callout panel (180 px) showing Peak / Latest / Last Change metrics, Key Finding callout, and bullet insights.
+**1-2 charts:** Each chart stacked vertically as `ExhibitWithKPI` -- chart card (fills width minus 190px KPI panel) + KPI panel (emoji circle, title, subtitle, description). Chart card has period annotations row (`ANN_H=80px`) and source attribution row below the chart body.
 
-**Multi-chart (2-4 blocks):** 2-column grid of ExhibitCard components, each with an Exhibit badge, dark title bar, Chart.js chart body, and per-chart insight bullets. A TakeawaysSection at the bottom combines all insights as 2-column checkmark bullets.
+**3-4 charts:** 2×2 grid of compact `ExhibitCard` components, each with combined badge+title row, chart body, and 2-line insight strip. 3-chart layout centers the 3rd card.
+
+**Key Takeaways** (`TakeawaysSection`): absolute-positioned at bottom, single-column ✓ bullets. `HighlightText` component renders `[[keyword]]` as teal bold `<span>`s.
 
 ---
 

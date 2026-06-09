@@ -315,7 +315,7 @@ function renderKPIPanel(
   // Inner ring for depth
   slide.addShape(pres.ShapeType.ellipse, {
     x: I(circX + 8), y: I(circY + 8), w: I((circR - 8) * 2), h: I((circR - 8) * 2),
-    fill: { color: "00000000" }, line: { color: C.light3, width: 0.8 },
+    fill: { type: "none" }, line: { color: C.light3, width: 0.8 },
   });
   // Icon emoji
   const kpiIcon = block.kpiIcon || "📊";
