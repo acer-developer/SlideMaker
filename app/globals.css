@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand-primary:  #3AA4A9;
+  --brand-dark-1:   #2E8388;
+  --brand-dark-2:   #236567;
+  --brand-dark-3:   #1A4A4C;
+  --brand-light-1:  #52B5BA;
+  --brand-light-2:  #6EC7CB;
+  --brand-light-3:  #91DFE2;
+  --brand-light-4:  #B5EEEF;
+  --brand-light-5:  #D5F6F7;
+  --bg:             #F2FAFB;
+  --card:           #FFFFFF;
+  --border:         #DFF0F1;
+  --text:           #1A2E2F;
+  --muted:          #5C7C7E;
+  --placeholder:    #9EB8B9;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'APTOEX', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.slide-font {
+  font-family: 'APTOEX', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--brand-light-3); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-primary); }
+
+/* Smooth transitions */
+button, input, textarea, select {
+  transition: all 0.15s ease;
 }

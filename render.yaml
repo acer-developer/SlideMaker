@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: slidemaker-api
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
