@@ -40,18 +40,16 @@ export default function Header({ onSettings, hasKey }: Props) {
           style={{
             display: "flex", alignItems: "center", gap: 7,
             padding: "8px 18px", borderRadius: 10,
-            border: `1.5px solid ${hasKey ? "var(--brand-primary)" : "var(--border)"}`,
-            background: hasKey ? "var(--brand-light-5)" : "#fff",
-            color: hasKey ? "var(--brand-dark-2)" : "var(--muted)",
+            border: `1.5px solid ${hasKey ? "var(--brand-primary)" : "#FECACA"}`,
+            background: hasKey ? "var(--brand-light-5)" : "#FEF2F2",
+            color: hasKey ? "var(--brand-dark-2)" : "#DC2626",
             fontSize: 14, fontWeight: 600, cursor: "pointer",
             transition: "all 0.15s",
           }}
         >
           <Settings size={14} />
-          Preferences
-          {hasKey && (
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brand-primary)", flexShrink: 0 }} />
-          )}
+          BYOK
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: hasKey ? "var(--brand-primary)" : "#EF4444", flexShrink: 0 }} />
         </button>
       </div>
     </header>

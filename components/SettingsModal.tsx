@@ -66,7 +66,7 @@ export default function SettingsModal({ onClose, onSave }: Props) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
             <Key size={16} color="var(--brand-primary)" />
-            <span style={{ fontSize: 18, fontWeight: 700, color: "var(--brand-dark-3)" }}>Preferences</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: "var(--brand-dark-3)" }}>BYOK — Bring Your Own Key</span>
           </div>
           <button
             onClick={onClose}
