@@ -9,20 +9,41 @@ app.use(express.json({ limit: '2mb' }));
 app.get('/health', (_, res) => res.json({ status: 'ok', service: 'slidemaker-api' }));
 
 app.post('/api/generate', async (req, res) => {
-  const { dataRaw, context, instructions } = req.body;
+  const { dataRaw, context, instructions, apiKey, provider } = req.body;
   if (!dataRaw || !context) return res.status(400).json({ error: 'dataRaw and context are required' });
 
   const prompt = buildPrompt(dataRaw, context, instructions);
+
+  // BYOK: user-supplied key takes priority over server env vars
+  if (apiKey && provider === 'openrouter') {
+    try {
+      const insights = await callOpenRouter(apiKey, prompt);
+      return res.json({ insights });
+    } catch (e) {
+      console.error('BYOK OpenRouter failed:', e.message);
+      return res.status(400).json({ error: 'OpenRouter key error: ' + e.message });
+    }
+  }
+  if (apiKey && provider === 'nvidia') {
+    try {
+      const insights = await callNvidia(apiKey, prompt);
+      return res.json({ insights });
+    } catch (e) {
+      console.error('BYOK NVIDIA failed:', e.message);
+      return res.status(400).json({ error: 'NVIDIA NIM key error: ' + e.message });
+    }
+  }
+
+  // Fallback: server env var keys
   const openrouterKey = process.env.OPENROUTER_API_KEY;
   const nvidiaKey = process.env.NVIDIA_API_KEY;
 
-  // Try OpenRouter first, fallback to NVIDIA
   if (openrouterKey) {
     try {
       const insights = await callOpenRouter(openrouterKey, prompt);
       return res.json({ insights });
     } catch (e) {
-      console.error('OpenRouter failed, trying NVIDIA:', e.message);
+      console.error('Server OpenRouter failed, trying NVIDIA:', e.message);
     }
   }
   if (nvidiaKey) {
@@ -30,10 +51,10 @@ app.post('/api/generate', async (req, res) => {
       const insights = await callNvidia(nvidiaKey, prompt);
       return res.json({ insights });
     } catch (e) {
-      console.error('NVIDIA failed:', e.message);
+      console.error('Server NVIDIA failed:', e.message);
     }
   }
-  res.status(503).json({ error: 'AI generation unavailable. Check server API keys.' });
+  res.status(503).json({ error: 'AI generation unavailable. Add your API key in Preferences.' });
 });
 
 function buildPrompt(dataRaw, context, instructions) {

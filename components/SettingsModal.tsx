@@ -1,126 +1,178 @@
 "use client";
 import { useState } from "react";
-import { X, Key, ExternalLink, Check } from "lucide-react";
-import type { AppSettings } from "@/lib/types";
+import { X, Key, ExternalLink } from "lucide-react";
+
+type Provider = "openrouter" | "nvidia";
 
 interface Props {
-  settings: AppSettings;
-  onSave: (s: AppSettings) => void;
   onClose: () => void;
+  onSave: () => void;
 }
 
-export default function SettingsModal({ settings, onSave, onClose }: Props) {
-  const [form, setForm] = useState<AppSettings>(settings);
-  const [saved, setSaved] = useState(false);
+const PROVIDERS: { id: Provider; name: string; hint: string; url: string; placeholder: string }[] = [
+  { id: "openrouter", name: "OpenRouter",  hint: "Free: 200 req/day",       url: "https://openrouter.ai/keys",       placeholder: "sk-or-v1-..." },
+  { id: "nvidia",     name: "NVIDIA NIM",  hint: "Free: 1000 credits/mo",   url: "https://build.nvidia.com/",        placeholder: "nvapi-..."     },
+];
 
-  function handleSave() {
-    onSave(form);
-    setSaved(true);
-    setTimeout(() => { setSaved(false); onClose(); }, 800);
+export default function SettingsModal({ onClose, onSave }: Props) {
+  const [provider, setProvider] = useState<Provider>(() => {
+    if (typeof window === "undefined") return "openrouter";
+    return (localStorage.getItem("slidemaker_provider") as Provider) || "openrouter";
+  });
+  const [key, setKey] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const p = (localStorage.getItem("slidemaker_provider") as Provider) || "openrouter";
+    return localStorage.getItem(`slidemaker_${p}_key`) || "";
+  });
+
+  function handleProviderSwitch(p: Provider) {
+    setProvider(p);
+    setKey(typeof window !== "undefined" ? localStorage.getItem(`slidemaker_${p}_key`) || "" : "");
   }
 
+  function save() {
+    localStorage.setItem("slidemaker_provider", provider);
+    if (key.trim()) {
+      localStorage.setItem(`slidemaker_${provider}_key`, key.trim());
+    } else {
+      localStorage.removeItem(`slidemaker_${provider}_key`);
+    }
+    onSave();
+  }
+
+  const info = PROVIDERS.find(p => p.id === provider)!;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(10,30,30,0.6)" }}>
-      <div className="w-full max-w-md rounded-2xl bg-white overflow-hidden shadow-2xl" style={{ border: "1px solid var(--border)" }}>
-        <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{ background: "var(--brand-dark-3)", borderBottom: "1px solid var(--brand-dark-2)" }}
-        >
-          <div className="flex items-center gap-2">
-            <Key size={15} color="var(--brand-light-3)" />
-            <span className="font-semibold text-sm text-white">API Keys</span>
+    <div
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(10,30,31,0.55)", backdropFilter: "blur(6px)",
+      }}
+    >
+      <div style={{
+        background: "#fff", borderRadius: 20,
+        width: "100%", maxWidth: 460, margin: "0 20px",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.22)",
+        overflow: "hidden",
+      }}>
+
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "22px 28px 18px",
+          borderBottom: "1px solid var(--border)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <Key size={16} color="var(--brand-primary)" />
+            <span style={{ fontSize: 18, fontWeight: 700, color: "var(--brand-dark-3)" }}>Preferences</span>
           </div>
-          <button onClick={onClose} style={{ color: "rgba(255,255,255,0.5)" }}>
-            <X size={16} />
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", display: "flex", alignItems: "center", padding: 4 }}
+          >
+            <X size={18} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
-          <div
-            className="rounded-xl px-4 py-3 text-xs leading-relaxed"
-            style={{ background: "var(--brand-light-5)", color: "var(--brand-dark-2)", border: "1px solid var(--brand-light-3)" }}
-          >
-            Keys are stored in your browser only and never sent to any server. Each team member needs their own free key.
+        {/* Body */}
+        <div style={{ padding: "28px 28px 8px" }}>
+
+          {/* Provider selector */}
+          <div style={{ marginBottom: 28 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)", marginBottom: 12 }}>
+              Select AI Provider
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {PROVIDERS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handleProviderSwitch(p.id)}
+                  style={{
+                    padding: "14px 12px",
+                    borderRadius: 12,
+                    border: `2px solid ${provider === p.id ? "var(--brand-primary)" : "#B0C8CA"}`,
+                    background: provider === p.id ? "var(--brand-light-5)" : "#fff",
+                    color: provider === p.id ? "var(--brand-dark-2)" : "var(--muted)",
+                    fontWeight: 700, fontSize: 15,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+                  }}
+                >
+                  <span>{p.name}</span>
+                  <span style={{ fontSize: 11, fontWeight: 400, color: provider === p.id ? "var(--brand-dark-1)" : "var(--placeholder)" }}>
+                    {p.hint}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* OpenRouter */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold" style={{ color: "var(--text)" }}>
-                OpenRouter Key
-                <span className="ml-1.5 font-normal px-1.5 py-0.5 rounded text-xs" style={{ background: "var(--brand-light-5)", color: "var(--brand-dark-1)" }}>
-                  Primary
-                </span>
+          {/* API Key input */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
+                API Key (BYOK)
               </label>
               <a
-                href="https://openrouter.ai/keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs"
-                style={{ color: "var(--brand-primary)" }}
+                href={info.url} target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--brand-primary)", textDecoration: "none", fontWeight: 600 }}
               >
-                Get free key <ExternalLink size={10} />
+                Get free key <ExternalLink size={11} />
               </a>
             </div>
             <input
               type="password"
-              placeholder="sk-or-v1-..."
-              value={form.openrouterKey}
-              onChange={e => setForm(f => ({ ...f, openrouterKey: e.target.value }))}
-              className="w-full rounded-xl px-3 py-2.5 text-sm outline-none"
+              value={key}
+              onChange={e => setKey(e.target.value)}
+              placeholder={info.placeholder}
               style={{
-                border: `1.5px solid ${form.openrouterKey ? "var(--brand-light-3)" : "var(--border)"}`,
-                background: form.openrouterKey ? "var(--brand-light-5)" : "#fff",
-                color: "var(--text)",
+                display: "block", width: "100%",
+                padding: "13px 16px", fontSize: 14,
+                border: `1.5px solid ${key ? "var(--brand-light-3)" : "#B0C8CA"}`,
+                borderRadius: 10,
+                background: key ? "var(--brand-light-5)" : "#fff",
+                color: "var(--text)", outline: "none",
+                fontFamily: "monospace", letterSpacing: "0.04em",
               }}
             />
-            <p className="mt-1 text-xs" style={{ color: "var(--placeholder)" }}>200 free requests/day, uses Llama 3.3 70B</p>
-          </div>
-
-          {/* NVIDIA NIM */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold" style={{ color: "var(--text)" }}>
-                NVIDIA NIM Key
-                <span className="ml-1.5 font-normal px-1.5 py-0.5 rounded text-xs" style={{ background: "#FEF9C3", color: "#854D0E" }}>
-                  Fallback
-                </span>
-              </label>
-              <a
-                href="https://build.nvidia.com/explore/discover"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs"
-                style={{ color: "var(--brand-primary)" }}
-              >
-                Get free key <ExternalLink size={10} />
-              </a>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 7 }}>
+              <p style={{ fontSize: 12, color: "var(--placeholder)", margin: 0 }}>
+                Stored in your browser only · never sent to our servers
+              </p>
+              {key && (
+                <button
+                  onClick={() => setKey("")}
+                  style={{ fontSize: 12, color: "#EF4444", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0 }}
+                >
+                  Clear
+                </button>
+              )}
             </div>
-            <input
-              type="password"
-              placeholder="nvapi-..."
-              value={form.nvidiaKey}
-              onChange={e => setForm(f => ({ ...f, nvidiaKey: e.target.value }))}
-              className="w-full rounded-xl px-3 py-2.5 text-sm outline-none"
-              style={{
-                border: `1.5px solid ${form.nvidiaKey ? "var(--brand-light-3)" : "var(--border)"}`,
-                background: form.nvidiaKey ? "var(--brand-light-5)" : "#fff",
-                color: "var(--text)",
-              }}
-            />
-            <p className="mt-1 text-xs" style={{ color: "var(--placeholder)" }}>1000 free credits/month, uses Llama 3.1 70B</p>
           </div>
 
-          <p className="text-xs text-center" style={{ color: "var(--placeholder)" }}>
-            No key? Insights become manual text fields. PPT still works.
-          </p>
+          {/* Info callout */}
+          <div style={{ padding: "12px 16px", borderRadius: 10, background: "var(--brand-light-5)", border: "1px solid var(--brand-light-4)", marginBottom: 24 }}>
+            <p style={{ fontSize: 12, color: "var(--brand-dark-2)", margin: 0, lineHeight: 1.6 }}>
+              Your key is used first. If left blank, the app falls back to a shared server key automatically.
+            </p>
+          </div>
+        </div>
 
+        {/* Footer */}
+        <div style={{ padding: "0 28px 28px" }}>
           <button
-            onClick={handleSave}
-            className="w-full py-2.5 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2"
-            style={{ background: saved ? "#059669" : "var(--brand-primary)" }}
+            onClick={save}
+            style={{
+              width: "100%", padding: "15px", borderRadius: 12, border: "none",
+              background: "var(--brand-dark-3)", color: "#fff",
+              fontSize: 16, fontWeight: 700, cursor: "pointer",
+              transition: "all 0.15s",
+            }}
           >
-            {saved ? <><Check size={15} /> Saved</> : "Save Keys"}
+            Save
           </button>
         </div>
       </div>

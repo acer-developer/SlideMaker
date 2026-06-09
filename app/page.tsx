@@ -1,10 +1,11 @@
 ﻿"use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Plus, Sparkles, Loader2, Download, Eye, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Header from "@/components/Header";
 import ChartBlock from "@/components/ChartBlock";
 import PreviewModal from "@/components/PreviewModal";
 import SlideCanvas from "@/components/SlideCanvas";
+import SettingsModal from "@/components/SettingsModal";
 import type { ChartBlock as ChartBlockType } from "@/lib/types";
 
 function makeBlock(): ChartBlockType {
@@ -23,11 +24,24 @@ function makeBlock(): ChartBlockType {
 export default function Home() {
   const [blocks, setBlocks] = useState<ChartBlockType[]>([makeBlock()]);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [hasKey, setHasKey] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatingStep, setGeneratingStep] = useState("");
+
+  useEffect(() => {
+    const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
+    setHasKey(!!localStorage.getItem(`slidemaker_${provider}_key`));
+  }, []);
+
+  function handleSettingsSave() {
+    const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
+    setHasKey(!!localStorage.getItem(`slidemaker_${provider}_key`));
+    setShowSettings(false);
+  }
 
   const updateBlock = useCallback((id: string, updates: Partial<ChartBlockType>) => {
     setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
@@ -103,7 +117,7 @@ export default function Home() {
 
   return (
     <div style={{ flex: 1, minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
-      <Header />
+      <Header onSettings={() => setShowSettings(true)} hasKey={hasKey} />
 
       <main style={{ flex: 1, width: "100%", maxWidth: 1200, margin: "0 auto", padding: "60px clamp(24px, 5vw, 64px) 120px" }}>
 
@@ -266,16 +280,30 @@ export default function Home() {
           isExporting={isExporting}
         />
       )}
+
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onSave={handleSettingsSave}
+        />
+      )}
     </div>
   );
 }
 
 async function generateInsightsFromServer(block: ChartBlockType): Promise<string[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
+  const apiKey = localStorage.getItem(`slidemaker_${provider}_key`) || undefined;
   const res = await fetch(`${apiUrl}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dataRaw: block.dataRaw, context: block.context, instructions: block.instructions }),
+    body: JSON.stringify({
+      dataRaw: block.dataRaw,
+      context: block.context,
+      instructions: block.instructions,
+      ...(apiKey ? { apiKey, provider } : {}),
+    }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? 'Generation failed');

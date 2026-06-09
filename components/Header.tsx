@@ -1,7 +1,12 @@
 ﻿"use client";
-import { Layers } from "lucide-react";
+import { Bot, Settings } from "lucide-react";
 
-export default function Header() {
+interface Props {
+  onSettings: () => void;
+  hasKey: boolean;
+}
+
+export default function Header({ onSettings, hasKey }: Props) {
   return (
     <header style={{
       position: "sticky", top: 0, zIndex: 40,
@@ -12,8 +17,9 @@ export default function Header() {
       <div style={{
         maxWidth: 1200, margin: "0 auto",
         padding: "0 clamp(24px, 5vw, 64px)", height: 72,
-        display: "flex", alignItems: "center",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
+        {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 34, height: 34, borderRadius: 9,
@@ -21,12 +27,32 @@ export default function Header() {
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
-            <Layers size={15} color="var(--brand-light-3)" strokeWidth={2} />
+            <Bot size={17} color="var(--brand-light-3)" strokeWidth={2} />
           </div>
           <span style={{ fontWeight: 700, fontSize: 21, color: "var(--brand-dark-3)", letterSpacing: "-0.01em" }}>
             SlideMaker
           </span>
         </div>
+
+        {/* Preferences button */}
+        <button
+          onClick={onSettings}
+          style={{
+            display: "flex", alignItems: "center", gap: 7,
+            padding: "8px 18px", borderRadius: 10,
+            border: `1.5px solid ${hasKey ? "var(--brand-primary)" : "var(--border)"}`,
+            background: hasKey ? "var(--brand-light-5)" : "#fff",
+            color: hasKey ? "var(--brand-dark-2)" : "var(--muted)",
+            fontSize: 14, fontWeight: 600, cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+        >
+          <Settings size={14} />
+          Preferences
+          {hasKey && (
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brand-primary)", flexShrink: 0 }} />
+          )}
+        </button>
       </div>
     </header>
   );
