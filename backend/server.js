@@ -58,10 +58,25 @@ app.post('/api/generate', async (req, res) => {
 });
 
 function buildPrompt(dataRaw, context, instructions) {
-  if (instructions?.trim()) {
-    return `You are a data analyst. Analyze this data and write insights following the user instructions exactly.\n\nData:\n${dataRaw}\n\nContext: ${context}\n\nInstructions (follow strictly): ${instructions}\n\nReturn 3 to 5 bullet points. Each on a new line starting with a dash (-). Be specific with numbers. Do not use em dashes. Do not add preamble or explanation.`;
-  }
-  return `You are a data analyst. Analyze this data and write 3 to 5 sharp, specific, data-backed insights.\n\nData:\n${dataRaw}\n\nContext: ${context}\n\nReturn 3 to 5 bullet points. Each on a new line starting with a dash (-). Be specific with numbers. Do not use em dashes. Do not add preamble.`;
+  const base = `You are a senior research analyst writing insights for a professional research slide deck.
+
+Data:
+${dataRaw}
+
+Context: ${context}
+${instructions?.trim() ? `\nInstructions (follow strictly): ${instructions}\n` : ''}
+Write 4 to 5 sharp, specific, data-backed bullet insights suitable for a research report.
+
+Rules:
+- Each insight on its own line starting with a dash (-)
+- Lead with the key number or percentage — be precise (e.g. "Revenue grew 34% YoY from $120K to $161K")
+- Include trend direction, magnitude, and business implication in each point
+- Note any standout peaks, drops, or inflection points with exact values
+- Last insight should be a forward-looking or comparative takeaway
+- Do NOT use em dashes, en dashes, or markdown formatting
+- Do NOT add preamble, headers, or explanation — bullets only`;
+
+  return base;
 }
 
 async function callOpenRouter(key, prompt) {
