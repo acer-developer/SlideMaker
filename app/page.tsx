@@ -102,10 +102,10 @@ export default function Home() {
   const allReady = blocks.every(b => b.dataRaw.trim() && b.context.trim());
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
       <Header />
 
-      <main style={{ flex: 1, width: "100%", maxWidth: 1000, margin: "0 auto", padding: "60px 36px 100px" }}>
+      <main style={{ flex: 1, width: "100%", maxWidth: 1200, margin: "0 auto", padding: "60px clamp(24px, 5vw, 64px) 120px" }}>
 
         {/* Page title */}
         <div style={{ marginBottom: 48 }}>

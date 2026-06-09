@@ -10,8 +10,8 @@ export default function Header() {
       boxShadow: "0 1px 3px rgba(26,74,76,0.06)",
     }}>
       <div style={{
-        maxWidth: 1000, margin: "0 auto",
-        padding: "0 36px", height: 72,
+        maxWidth: 1200, margin: "0 auto",
+        padding: "0 clamp(24px, 5vw, 64px)", height: 72,
         display: "flex", alignItems: "center",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
