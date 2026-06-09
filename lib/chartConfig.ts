@@ -38,8 +38,8 @@ const BASE_SCALES = {
 const BAR_DATALABELS = {
   anchor: 'end' as const,
   align: 'end' as const,
-  offset: 2,
-  font: { size: 8, weight: 'bold' as const, family: "'APTOEX','Inter',sans-serif" },
+  offset: 3,
+  font: { size: 9, weight: 'bold' as const, family: "'APTOEX','Inter',sans-serif" },
   color: BRAND.dark2,
   formatter: (v: number) => formatVal(v),
 };
@@ -48,10 +48,13 @@ const BAR_DATALABELS = {
 const LINE_DATALABELS = {
   anchor: 'end' as const,
   align: 'top' as const,
-  offset: 4,
-  font: { size: 8, weight: 'bold' as const, family: "'APTOEX','Inter',sans-serif" },
+  offset: 5,
+  font: { size: 9, weight: 'bold' as const, family: "'APTOEX','Inter',sans-serif" },
   color: BRAND.dark2,
   formatter: (v: number) => formatVal(v),
+  backgroundColor: 'rgba(255,255,255,0.75)',
+  borderRadius: 2,
+  padding: { top: 1, bottom: 1, left: 2, right: 2 },
 };
 
 export type ChartSpec =
@@ -128,7 +131,7 @@ export function buildChartSpec(type: ChartTypeId | null, parsed: ParsedData): Ch
         tooltip: { enabled: true },
       },
       scales: BASE_SCALES as ChartOptions<'line'>['scales'],
-      layout: { padding: { top: 20, right: 10, bottom: 4, left: 4 } },
+      layout: { padding: { top: 28, right: 12, bottom: 4, left: 4 } },
     };
     return { kind: 'line', data: d, options: opts, datalabels: LINE_DATALABELS };
   }

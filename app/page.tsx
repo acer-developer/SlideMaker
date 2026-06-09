@@ -18,6 +18,10 @@ function makeBlock(): ChartBlockType {
     chartType: null,
     insights: [],
     isGeneratingInsights: false,
+    kpiTitle: "",
+    kpiSubtitle: "",
+    kpiDescription: "",
+    annotations: [],
   };
 }
 
@@ -84,10 +88,10 @@ export default function Home() {
       setGeneratingStep(`Generating insights for chart ${i + 1} of ${blocks.length}...`);
       setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, isGeneratingInsights: true } : b));
       try {
-        const insights = await generateInsightsFromServer(block);
-        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights, isGeneratingInsights: false } : b));
+        const updates = await generateInsightsFromServer(block);
+        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, ...updates, isGeneratingInsights: false } : b));
       } catch {
-        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights: [], isGeneratingInsights: false } : b));
+        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights: [], kpiTitle: "", kpiSubtitle: "", kpiDescription: "", annotations: [], isGeneratingInsights: false } : b));
       }
     }
 
@@ -291,7 +295,7 @@ export default function Home() {
   );
 }
 
-async function generateInsightsFromServer(block: ChartBlockType): Promise<string[]> {
+async function generateInsightsFromServer(block: ChartBlockType): Promise<Partial<ChartBlockType>> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
   const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
   const apiKey = localStorage.getItem(`slidemaker_${provider}_key`) || undefined;
@@ -307,6 +311,12 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<string
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? 'Generation failed');
-  return data.insights ?? [];
+  return {
+    insights: data.insights ?? [],
+    kpiTitle: data.kpiTitle ?? '',
+    kpiSubtitle: data.kpiSubtitle ?? '',
+    kpiDescription: data.kpiDescription ?? '',
+    annotations: data.annotations ?? [],
+  };
 }
 
