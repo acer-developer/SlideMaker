@@ -102,34 +102,36 @@ export default function Home() {
   const allReady = blocks.every(b => b.dataRaw.trim() && b.context.trim());
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--bg)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
       <Header />
 
-      <main className="flex-1 w-full max-w-2xl mx-auto px-6 py-12">
+      <main style={{ flex: 1, width: "100%", maxWidth: 720, margin: "0 auto", padding: "44px 28px 60px" }}>
 
         {/* Page title */}
-        <div className="mb-10">
-          <h1 className="text-2xl font-bold mb-1.5" style={{ color: "var(--brand-dark-3)" }}>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 6, letterSpacing: "-0.02em" }}>
             Build Your Research Slide
           </h1>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
+          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>
             Add your data and context below, generate insights, then download as an A4 PPT.
           </p>
         </div>
 
         {/* Error banner */}
         {error && (
-          <div
-            className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm mb-5"
-            style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B" }}
-          >
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "12px 16px", borderRadius: 12, marginBottom: 20,
+            background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B",
+            fontSize: 13,
+          }}>
             <AlertTriangle size={15} />
             {error}
           </div>
         )}
 
         {/* Chart blocks */}
-        <div className="space-y-4 mb-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 16 }}>
           {blocks.map((block, i) => (
             <ChartBlock
               key={block.id}
@@ -147,25 +149,17 @@ export default function Home() {
         {blocks.length < 4 && !isGenerating && (
           <button
             onClick={addBlock}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-medium mb-8 border-2 border-dashed"
             style={{
-              borderColor: "var(--border)",
-              color: "var(--muted)",
-              background: "transparent",
-              transition: "all 0.2s",
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 8, padding: "12px 16px", borderRadius: 14,
+              border: "2px dashed #B0C8CA", color: "var(--muted)",
+              background: "transparent", fontSize: 13, fontWeight: 500,
+              cursor: "pointer", marginBottom: 12, transition: "all 0.2s",
             }}
-            onMouseEnter={e => {
-              (e.currentTarget).style.borderColor = "var(--brand-primary)";
-              (e.currentTarget).style.color = "var(--brand-primary)";
-              (e.currentTarget).style.background = "var(--brand-light-5)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget).style.borderColor = "var(--border)";
-              (e.currentTarget).style.color = "var(--muted)";
-              (e.currentTarget).style.background = "transparent";
-            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--brand-primary)"; e.currentTarget.style.color = "var(--brand-primary)"; e.currentTarget.style.background = "var(--brand-light-5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#B0C8CA"; e.currentTarget.style.color = "var(--muted)"; e.currentTarget.style.background = "transparent"; }}
           >
-            <Plus size={16} />
+            <Plus size={15} />
             Add Chart ({blocks.length}/4)
           </button>
         )}
@@ -175,8 +169,10 @@ export default function Home() {
           <button
             onClick={handleGenerate}
             disabled={isGenerating || !allReady}
-            className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-sm font-bold text-white mb-8"
             style={{
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+              gap: 10, padding: "14px 20px", borderRadius: 14, border: "none",
+              fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 32,
               background: isGenerating || !allReady ? "#94A3B8" : "var(--brand-dark-3)",
               cursor: isGenerating || !allReady ? "not-allowed" : "pointer",
               boxShadow: !isGenerating && allReady ? "0 4px 16px rgba(26,74,76,0.25)" : "none",
@@ -193,10 +189,10 @@ export default function Home() {
 
         {/* Post-generation: slide preview + actions */}
         {generated && (
-          <div className="space-y-4 mb-8">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
             {/* Success badge + re-generate */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "#059669" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#059669" }}>
                 <CheckCircle2 size={16} />
                 Slide generated
               </div>
@@ -210,22 +206,20 @@ export default function Home() {
             </div>
 
             {/* Slide preview card */}
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{ border: "1px solid var(--border)", background: "#0A1E1F" }}
-            >
+            <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)", background: "#0A1E1F" }}>
               {/* Preview toolbar */}
-              <div
-                className="flex items-center justify-between px-4 py-2.5"
-                style={{ borderBottom: "1px solid #1A4A4C" }}
-              >
-                <span className="text-xs font-medium" style={{ color: "#91DFE2" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #1A4A4C" }}>
+                <span style={{ fontSize: 12, fontWeight: 500, color: "#91DFE2" }}>
                   Slide Preview - A4 Portrait
                 </span>
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
-                  style={{ background: "#1A4A4C", color: "#D5F6F7", transition: "all 0.2s" }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                    background: "#1A4A4C", color: "#D5F6F7", border: "none", cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
                 >
                   <Eye size={12} />
                   Full Preview
@@ -233,7 +227,7 @@ export default function Home() {
               </div>
 
               {/* Scaled slide */}
-              <div className="flex justify-center py-5 px-4 overflow-hidden" style={{ background: "#111C1C" }}>
+              <div style={{ display: "flex", justifyContent: "center", padding: "20px 16px", overflow: "hidden", background: "#111C1C" }}>
                 <div style={{ transform: "scale(0.38)", transformOrigin: "top center", height: 427, pointerEvents: "none" }}>
                   <SlideCanvas blocks={blocks} />
                 </div>
@@ -244,8 +238,10 @@ export default function Home() {
             <button
               onClick={handleDownload}
               disabled={isExporting}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-sm font-bold text-white"
               style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 10, padding: "14px 20px", borderRadius: 14, border: "none",
+                fontSize: 14, fontWeight: 700, color: "#fff",
                 background: isExporting ? "#94A3B8" : "var(--brand-primary)",
                 cursor: isExporting ? "not-allowed" : "pointer",
                 boxShadow: !isExporting ? "0 4px 16px rgba(58,164,169,0.3)" : "none",

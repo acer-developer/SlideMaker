@@ -3,16 +3,30 @@ import { Layers } from "lucide-react";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-40 flex items-center px-6 py-3.5"
-      style={{ background: "#fff", borderBottom: "1px solid var(--border)" }}>
-      <div className="flex items-center gap-2.5">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg"
-          style={{ background: "var(--brand-dark-3)" }}>
-          <Layers size={15} color="var(--brand-light-3)" strokeWidth={2} />
+    <header style={{
+      position: "sticky", top: 0, zIndex: 40,
+      background: "#fff",
+      borderBottom: "1px solid var(--border)",
+      boxShadow: "0 1px 3px rgba(26,74,76,0.06)",
+    }}>
+      <div style={{
+        maxWidth: 720, margin: "0 auto",
+        padding: "0 28px", height: 56,
+        display: "flex", alignItems: "center",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: "var(--brand-dark-3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <Layers size={15} color="var(--brand-light-3)" strokeWidth={2} />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 16, color: "var(--brand-dark-3)", letterSpacing: "-0.01em" }}>
+            SlideMaker
+          </span>
         </div>
-        <span className="font-bold text-base tracking-tight" style={{ color: "var(--brand-dark-3)" }}>
-          SlideMaker
-        </span>
       </div>
     </header>
   );

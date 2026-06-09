@@ -10,31 +10,28 @@ interface Props {
 export default function ChartTypeSelector({ value, onChange }: Props) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2.5">
-        <label
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: "var(--muted)" }}
-        >
-          Chart Type
-          <span
-            className="ml-1.5 font-normal normal-case tracking-normal"
-            style={{ color: "var(--placeholder)" }}
-          >
+      {/* Label row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
+            Chart Type
+          </span>
+          <span style={{ fontSize: 11, color: "var(--placeholder)" }}>
             optional, AI picks if blank
           </span>
-        </label>
+        </div>
         {value && (
           <button
             onClick={() => onChange(null)}
-            className="text-xs"
-            style={{ color: "var(--brand-dark-1)" }}
+            style={{ fontSize: 11, fontWeight: 500, color: "var(--brand-dark-1)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             Clear
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      {/* 4-column grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
         {CHART_TYPES.map(ct => {
           const selected = value === ct.id;
           return (
@@ -42,16 +39,19 @@ export default function ChartTypeSelector({ value, onChange }: Props) {
               key={ct.id}
               onClick={() => onChange(ct.id === value ? null : ct.id)}
               title={ct.description}
-              className="flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border transition-all"
               style={{
-                borderColor: selected ? "var(--brand-primary)" : "#B0C8CA",
+                display: "flex", flexDirection: "column", alignItems: "center",
+                gap: 4, padding: "10px 4px",
+                borderRadius: 12,
+                border: `1.5px solid ${selected ? "var(--brand-primary)" : "#B0C8CA"}`,
                 background: selected ? "var(--brand-light-5)" : "#fff",
                 color: selected ? "var(--brand-dark-2)" : "#4B6365",
-                boxShadow: selected ? "0 0 0 2px var(--brand-light-3)" : "none",
+                boxShadow: selected ? "0 0 0 2px var(--brand-light-4)" : "none",
+                cursor: "pointer",
               }}
             >
-              <span className="text-lg leading-none">{ct.icon}</span>
-              <span className="text-xs font-medium leading-tight text-center">{ct.label}</span>
+              <span style={{ fontSize: 18, lineHeight: 1 }}>{ct.icon}</span>
+              <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.2, textAlign: "center" }}>{ct.label}</span>
             </button>
           );
         })}

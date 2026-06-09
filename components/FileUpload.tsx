@@ -39,11 +39,6 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
     if (file) processFile(file);
   }
 
-  function onFileInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) processFile(file);
-  }
-
   function clearFile() {
     onDataChange("", null);
     setTab("paste");
@@ -52,19 +47,25 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+      {/* Label row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
           Data <span style={{ color: "#EF4444" }}>*</span>
         </label>
-        <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
           {(["paste", "upload"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="px-2.5 py-1 text-xs font-medium"
               style={{
+                padding: "4px 12px",
+                fontSize: 11,
+                fontWeight: 600,
                 background: tab === t ? "var(--brand-dark-3)" : "#fff",
                 color: tab === t ? "#fff" : "var(--muted)",
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: "0.02em",
               }}
             >
               {t === "paste" ? "Paste" : "Upload"}
@@ -79,26 +80,35 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
           value={dataRaw}
           onChange={e => onDataChange(e.target.value, null)}
           rows={5}
-          className="w-full rounded-xl px-3 py-2.5 text-xs outline-none resize-y font-mono leading-relaxed"
           style={{
+            display: "block",
+            width: "100%",
+            minHeight: 110,
+            padding: "10px 12px",
+            fontSize: 12,
+            fontFamily: "monospace",
+            lineHeight: 1.7,
             border: `1.5px solid ${dataRaw ? "var(--brand-light-3)" : "#B0C8CA"}`,
+            borderRadius: 10,
             background: dataRaw ? "var(--brand-light-5)" : "#fff",
             color: "var(--text)",
-            minHeight: "110px",
+            outline: "none",
+            resize: "vertical",
           }}
         />
       ) : (
         <div>
           {fileName ? (
-            <div
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl"
-              style={{ background: "var(--brand-light-5)", border: "1.5px solid var(--brand-primary)" }}
-            >
-              <div className="flex items-center gap-2">
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 14px", borderRadius: 10,
+              background: "var(--brand-light-5)", border: "1.5px solid var(--brand-primary)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <FileText size={14} style={{ color: "var(--brand-primary)" }} />
-                <span className="text-sm font-medium" style={{ color: "var(--brand-dark-2)" }}>{fileName}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--brand-dark-2)" }}>{fileName}</span>
               </div>
-              <button onClick={clearFile} style={{ color: "var(--muted)" }}>
+              <button onClick={clearFile} style={{ color: "var(--muted)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
                 <X size={14} />
               </button>
             </div>
@@ -108,20 +118,23 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
               onDragLeave={() => setDragging(false)}
               onDrop={onDrop}
               onClick={() => fileRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-1.5 rounded-xl py-7 cursor-pointer"
               style={{
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                gap: 6, padding: "28px 16px",
                 border: `2px dashed ${dragging ? "var(--brand-primary)" : "#B0C8CA"}`,
+                borderRadius: 10,
                 background: dragging ? "var(--brand-light-5)" : "#FAFEFE",
+                cursor: "pointer",
               }}
             >
               <UploadCloud size={22} style={{ color: dragging ? "var(--brand-primary)" : "var(--brand-light-2)" }} />
-              <p className="text-sm" style={{ color: "var(--muted)" }}>
+              <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
                 Drop file or <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>browse</span>
               </p>
-              <p className="text-xs" style={{ color: "var(--placeholder)" }}>CSV, Excel (.xlsx), TXT</p>
+              <p style={{ fontSize: 11, color: "var(--placeholder)", margin: 0 }}>CSV, Excel (.xlsx), TXT</p>
             </div>
           )}
-          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.txt" className="hidden" onChange={onFileInput} />
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.txt" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f); }} />
         </div>
       )}
     </div>
