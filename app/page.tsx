@@ -42,12 +42,14 @@ export default function Home() {
 
   useEffect(() => {
     const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
-    setHasKey(!!localStorage.getItem(`slidemaker_${provider}_key`));
+    const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
+    setHasKey(useDefault || !!localStorage.getItem(`slidemaker_${provider}_key`));
   }, []);
 
   function handleSettingsSave() {
     const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
-    setHasKey(!!localStorage.getItem(`slidemaker_${provider}_key`));
+    const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
+    setHasKey(useDefault || !!localStorage.getItem(`slidemaker_${provider}_key`));
     setShowSettings(false);
   }
 
@@ -339,9 +341,10 @@ export default function Home() {
 }
 
 async function generateInsightsFromServer(block: ChartBlockType): Promise<Partial<ChartBlockType>> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-  const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
-  const apiKey = localStorage.getItem(`slidemaker_${provider}_key`) || undefined;
+  const apiUrl     = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const provider   = localStorage.getItem("slidemaker_provider") || "openrouter";
+  const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
+  const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);
   const res = await fetch(`${apiUrl}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

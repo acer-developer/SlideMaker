@@ -5,6 +5,13 @@ const PptxGenJS = require('pptxgenjs');
 const { renderPPT } = require('./pptRenderer');
 const { parseCSV } = require('./parseData');
 
+// ── Default API keys — loaded from env vars (set in Render dashboard / .env) ──
+// OPENROUTER_DEFAULT_KEY and NVIDIA_DEFAULT_KEY are the shared fallback keys.
+// They are intentionally separate from OPENROUTER_API_KEY / NVIDIA_API_KEY so
+// server-level keys and default-fallback keys can be rotated independently.
+const DEFAULT_OPENROUTER_KEY = process.env.OPENROUTER_DEFAULT_KEY || process.env.OPENROUTER_API_KEY || '';
+const DEFAULT_NVIDIA_KEY     = process.env.NVIDIA_DEFAULT_KEY     || process.env.NVIDIA_API_KEY     || '';
+
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json({ limit: '20mb' })); // larger limit for chart images
@@ -17,45 +24,33 @@ app.post('/api/generate', async (req, res) => {
 
   const prompt = buildPrompt(dataRaw, context, instructions, chartType);
 
+  // ── Key priority: BYOK → env vars → hardcoded defaults ───────────────────
+  // If BYOK key fails, fall through to defaults (don't return error — silently retry)
   if (apiKey && provider === 'openrouter') {
-    try {
-      const result = await callOpenRouter(apiKey, prompt);
-      return res.json(result);
-    } catch (e) {
-      console.error('BYOK OpenRouter failed:', e.message);
-      return res.status(400).json({ error: 'OpenRouter key error: ' + e.message });
-    }
+    try { return res.json(await callOpenRouter(apiKey, prompt)); }
+    catch (e) { console.error('BYOK OpenRouter failed, trying defaults:', e.message); }
   }
   if (apiKey && provider === 'nvidia') {
-    try {
-      const result = await callNvidia(apiKey, prompt);
-      return res.json(result);
-    } catch (e) {
-      console.error('BYOK NVIDIA failed:', e.message);
-      return res.status(400).json({ error: 'NVIDIA NIM key error: ' + e.message });
-    }
+    try { return res.json(await callNvidia(apiKey, prompt)); }
+    catch (e) { console.error('BYOK NVIDIA failed, trying defaults:', e.message); }
   }
 
-  const openrouterKey = process.env.OPENROUTER_API_KEY;
-  const nvidiaKey = process.env.NVIDIA_API_KEY;
+  if (process.env.OPENROUTER_API_KEY) {
+    try { return res.json(await callOpenRouter(process.env.OPENROUTER_API_KEY, prompt)); }
+    catch (e) { console.error('Env OpenRouter failed:', e.message); }
+  }
+  if (process.env.NVIDIA_API_KEY) {
+    try { return res.json(await callNvidia(process.env.NVIDIA_API_KEY, prompt)); }
+    catch (e) { console.error('Env NVIDIA failed:', e.message); }
+  }
 
-  if (openrouterKey) {
-    try {
-      const result = await callOpenRouter(openrouterKey, prompt);
-      return res.json(result);
-    } catch (e) {
-      console.error('Server OpenRouter failed, trying NVIDIA:', e.message);
-    }
-  }
-  if (nvidiaKey) {
-    try {
-      const result = await callNvidia(nvidiaKey, prompt);
-      return res.json(result);
-    } catch (e) {
-      console.error('Server NVIDIA failed:', e.message);
-    }
-  }
-  res.status(503).json({ error: 'AI generation unavailable. Add your API key in Preferences.' });
+  // Hardcoded defaults (always available)
+  try { return res.json(await callOpenRouter(DEFAULT_OPENROUTER_KEY, prompt)); }
+  catch (e) { console.error('Default OpenRouter failed:', e.message); }
+  try { return res.json(await callNvidia(DEFAULT_NVIDIA_KEY, prompt)); }
+  catch (e) { console.error('Default NVIDIA failed:', e.message); }
+
+  res.status(503).json({ error: 'AI generation unavailable — all providers failed.' });
 });
 
 function buildPrompt(dataRaw, context, instructions, chartType) {
@@ -207,7 +202,8 @@ function parseResponse(text) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/generate-ppt
-// AI designs the complete slide spec, backend renders a real editable PPTX.
+// AI designs the complete slide spec JSON → pptxgenjs renders real editable PPTX.
+// NOTE: Uses *raw* API callers (not parseResponse) so the slide-spec JSON is kept intact.
 // ─────────────────────────────────────────────────────────────────────────────
 app.post('/api/generate-ppt', async (req, res) => {
   const { blocks, apiKey, provider } = req.body;
@@ -217,26 +213,31 @@ app.post('/api/generate-ppt', async (req, res) => {
 
   const prompt = buildPPTPrompt(blocks);
 
-  // ── Call AI to get the slide spec ──────────────────────────────────────────
-  let spec;
-  try {
-    if (apiKey && provider === 'openrouter') {
-      spec = await callOpenRouter(apiKey, prompt);
-    } else if (apiKey && provider === 'nvidia') {
-      spec = await callNvidia(apiKey, prompt);
-    } else if (process.env.OPENROUTER_API_KEY) {
-      spec = await callOpenRouter(process.env.OPENROUTER_API_KEY, prompt);
-    } else if (process.env.NVIDIA_API_KEY) {
-      spec = await callNvidia(process.env.NVIDIA_API_KEY, prompt);
-    } else {
-      return res.status(503).json({ error: 'No AI key available. Add your key in BYOK settings.' });
-    }
-  } catch (e) {
-    console.error('PPT spec AI call failed:', e.message);
-    return res.status(400).json({ error: 'AI slide design failed: ' + e.message });
+  // ── Try all key sources in priority order; stop on first success ──────────
+  let rawText = null;
+  const attempts = [
+    apiKey && provider === 'openrouter' ? () => callOpenRouterRaw(apiKey, prompt)         : null,
+    apiKey && provider === 'nvidia'     ? () => callNvidiaRaw(apiKey, prompt)             : null,
+    process.env.OPENROUTER_API_KEY      ? () => callOpenRouterRaw(process.env.OPENROUTER_API_KEY, prompt) : null,
+    process.env.NVIDIA_API_KEY          ? () => callNvidiaRaw(process.env.NVIDIA_API_KEY, prompt)         : null,
+    () => callOpenRouterRaw(DEFAULT_OPENROUTER_KEY, prompt),
+    () => callNvidiaRaw(DEFAULT_NVIDIA_KEY, prompt),
+  ].filter(Boolean);
+
+  for (const attempt of attempts) {
+    try { rawText = await attempt(); if (rawText) break; }
+    catch (e) { console.error('PPT AI attempt failed, trying next:', e.message); }
   }
 
-  // ── Parse chart data for native rendering ────────────────────────────────
+  if (!rawText) {
+    return res.status(503).json({ error: 'AI generation unavailable — all providers failed.' });
+  }
+
+  // ── Parse slide spec from raw AI text ─────────────────────────────────────
+  const spec = parsePPTSpec(rawText);
+  console.log('PPT spec generated — layout:', spec.layout, '| exhibits:', spec.exhibits.length, '| takeaways:', spec.takeaways.length);
+
+  // ── Parse chart data for native rendering ─────────────────────────────────
   const chartDataArray = blocks.map(b => ({
     parsed: parseCSV(b.dataRaw || ''),
     chartType: b.chartType || null,
@@ -253,6 +254,94 @@ app.post('/api/generate-ppt', async (req, res) => {
     res.status(500).json({ error: 'PPT render failed: ' + e.message });
   }
 });
+
+// ── Raw API callers — return raw text (no parseResponse) ─────────────────────
+// These are used by /api/generate-ppt so the slide spec JSON is not mangled.
+async function callOpenRouterRaw(key, prompt) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://slidemaker.app',
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2000,
+      temperature: 0.2,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message ?? 'OpenRouter error');
+  return data.choices[0].message.content;
+}
+
+async function callNvidiaRaw(key, prompt) {
+  const res = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'meta/llama-3.1-70b-instruct',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2000,
+      temperature: 0.2,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail ?? 'NVIDIA NIM error');
+  return data.choices[0].message.content;
+}
+
+// ── Parse slide spec from raw AI text ────────────────────────────────────────
+function parsePPTSpec(text) {
+  const clean = s => (s || '').replace(/[—–]/g, '-').trim();
+  const cleanIcon = s => (s || '').trim().slice(0, 4);
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const p = JSON.parse(jsonMatch[0]);
+      return {
+        layout:        p.layout        || 'single',
+        slideTitle:    clean(p.slideTitle),
+        slideSubtitle: clean(p.slideSubtitle),
+        exhibits: (p.exhibits || []).map(e => ({
+          exhibitNum:  e.exhibitNum  || 1,
+          title:       clean(e.title),
+          chartIndex:  typeof e.chartIndex === 'number' ? e.chartIndex : 0,
+          kpi: e.kpi ? {
+            icon:        cleanIcon(e.kpi.icon || '📊'),
+            title:       clean(e.kpi.title),
+            keyMetric:   clean(e.kpi.keyMetric),
+            description: clean(e.kpi.description),
+          } : null,
+          annotations: (e.annotations || []).slice(0, 3).map(a => ({
+            period:      clean(a.period),
+            label:       clean(a.label),
+            description: clean(a.description),
+            icon:        cleanIcon(a.icon || ''),
+          })),
+          insights: (e.insights || []).map(clean),
+          source:   clean(e.source),
+        })),
+        takeaways: (p.takeaways || []).map(clean),
+      };
+    }
+  } catch (e) {
+    console.error('PPT spec parse failed:', e.message, '\nRaw (first 400):', text.slice(0, 400));
+  }
+  // Minimal fallback so the renderer never crashes
+  return {
+    layout:        'single',
+    slideTitle:    'DATA ANALYSIS',
+    slideSubtitle: '',
+    exhibits:      [{ exhibitNum: 1, title: 'Chart Analysis', chartIndex: 0, kpi: null, annotations: [], insights: [], source: '' }],
+    takeaways:     [],
+  };
+}
 
 // ── Build the AI prompt for slide design ─────────────────────────────────────
 function buildPPTPrompt(blocks) {

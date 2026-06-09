@@ -24,6 +24,10 @@ export default function SettingsModal({ onClose, onSave }: Props) {
     const p = (localStorage.getItem("slidemaker_provider") as Provider) || "openrouter";
     return localStorage.getItem(`slidemaker_${p}_key`) || "";
   });
+  const [useDefault, setUseDefault] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("slidemaker_use_default") === "true";
+  });
 
   function handleProviderSwitch(p: Provider) {
     setProvider(p);
@@ -32,6 +36,7 @@ export default function SettingsModal({ onClose, onSave }: Props) {
 
   function save() {
     localStorage.setItem("slidemaker_provider", provider);
+    localStorage.setItem("slidemaker_use_default", useDefault ? "true" : "false");
     if (key.trim()) {
       localStorage.setItem(`slidemaker_${provider}_key`, key.trim());
     } else {
@@ -153,11 +158,36 @@ export default function SettingsModal({ onClose, onSave }: Props) {
             </div>
           </div>
 
-          {/* Info callout */}
-          <div style={{ padding: "12px 16px", borderRadius: 10, background: "var(--brand-light-5)", border: "1px solid var(--brand-light-4)", marginBottom: 24 }}>
-            <p style={{ fontSize: 12, color: "var(--brand-dark-2)", margin: 0, lineHeight: 1.6 }}>
-              Your key is used first. If left blank, the app falls back to a shared server key automatically.
-            </p>
+          {/* Use Default API toggle */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "14px 16px", borderRadius: 10,
+            background: useDefault ? "var(--brand-light-5)" : "#F8FAFC",
+            border: `1px solid ${useDefault ? "var(--brand-light-3)" : "#E2E8F0"}`,
+            marginBottom: 24, cursor: "pointer", transition: "all 0.2s",
+          }}
+            onClick={() => setUseDefault(v => !v)}
+          >
+            <span style={{ fontSize: 15, fontWeight: 600, color: useDefault ? "var(--brand-dark-3)" : "var(--muted)" }}>
+              Use Default API
+            </span>
+            {/* Toggle pill */}
+            <div style={{
+              position: "relative", flexShrink: 0,
+              width: 44, height: 24, borderRadius: 12,
+              background: useDefault ? "var(--brand-primary)" : "#CBD5E1",
+              transition: "background 0.2s",
+            }}>
+              <span style={{
+                position: "absolute",
+                top: 3, left: useDefault ? 22 : 3,
+                width: 18, height: 18, borderRadius: 9,
+                background: "#fff",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+                transition: "left 0.2s",
+                display: "block",
+              }} />
+            </div>
           </div>
         </div>
 

@@ -15,9 +15,10 @@ import type { ChartBlock } from "./types";
  *  - No fragile client-side canvas capture; rendering is deterministic template-based.
  */
 export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
-  const apiUrl   = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-  const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
-  const apiKey   = localStorage.getItem(`slidemaker_${provider}_key`) || undefined;
+  const apiUrl     = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const provider   = localStorage.getItem("slidemaker_provider") || "openrouter";
+  const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
+  const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);
 
   // ── 1. Call backend → AI designs spec → renders PPTX (native charts) ──────
   const res = await fetch(`${apiUrl}/api/generate-ppt`, {
