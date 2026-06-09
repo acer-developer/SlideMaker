@@ -75,11 +75,13 @@ export default function ChartRenderer({ spec, chartId, width, height }: Props) {
   };
 
   if (spec.kind === "bar") {
-    const opts = { ...spec.options, plugins: { ...spec.options.plugins, datalabels: datalabelsConfig } };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts = { ...spec.options, plugins: { ...spec.options.plugins, datalabels: datalabelsConfig } } as any;
     return <Bar {...commonProps} data={spec.data} options={opts} />;
   }
   if (spec.kind === "line") {
-    const opts = { ...spec.options, plugins: { ...spec.options.plugins, datalabels: datalabelsConfig } };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts = { ...spec.options, plugins: { ...spec.options.plugins, datalabels: datalabelsConfig } } as any;
     return <Line {...commonProps} data={spec.data} options={opts} />;
   }
   if (spec.kind === "pie") return <Pie {...commonProps} data={spec.data} options={spec.options} />;
