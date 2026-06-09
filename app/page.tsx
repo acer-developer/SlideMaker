@@ -105,14 +105,14 @@ export default function Home() {
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
       <Header />
 
-      <main style={{ flex: 1, width: "100%", maxWidth: 720, margin: "0 auto", padding: "44px 28px 60px" }}>
+      <main style={{ flex: 1, width: "100%", maxWidth: 1000, margin: "0 auto", padding: "48px 36px 80px" }}>
 
         {/* Page title */}
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 6, letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontSize: 30, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 8, letterSpacing: "-0.02em" }}>
             Build Your Research Slide
           </h1>
-          <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.5 }}>
             Add your data and context below, generate insights, then download as an A4 PPT.
           </p>
         </div>
@@ -151,9 +151,9 @@ export default function Home() {
             onClick={addBlock}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 8, padding: "12px 16px", borderRadius: 14,
+              gap: 8, padding: "14px 16px", borderRadius: 14,
               border: "2px dashed #B0C8CA", color: "var(--muted)",
-              background: "transparent", fontSize: 13, fontWeight: 500,
+              background: "transparent", fontSize: 14, fontWeight: 500,
               cursor: "pointer", marginBottom: 12, transition: "all 0.2s",
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--brand-primary)"; e.currentTarget.style.color = "var(--brand-primary)"; e.currentTarget.style.background = "var(--brand-light-5)"; }}
@@ -171,8 +171,8 @@ export default function Home() {
             disabled={isGenerating || !allReady}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 10, padding: "14px 20px", borderRadius: 14, border: "none",
-              fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 32,
+              gap: 10, padding: "16px 24px", borderRadius: 14, border: "none",
+              fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 32,
               background: isGenerating || !allReady ? "#94A3B8" : "var(--brand-dark-3)",
               cursor: isGenerating || !allReady ? "not-allowed" : "pointer",
               boxShadow: !isGenerating && allReady ? "0 4px 16px rgba(26,74,76,0.25)" : "none",
@@ -240,8 +240,8 @@ export default function Home() {
               disabled={isExporting}
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 10, padding: "14px 20px", borderRadius: 14, border: "none",
-                fontSize: 14, fontWeight: 700, color: "#fff",
+                gap: 10, padding: "16px 24px", borderRadius: 14, border: "none",
+                fontSize: 15, fontWeight: 700, color: "#fff",
                 background: isExporting ? "#94A3B8" : "var(--brand-primary)",
                 cursor: isExporting ? "not-allowed" : "pointer",
                 boxShadow: !isExporting ? "0 4px 16px rgba(58,164,169,0.3)" : "none",

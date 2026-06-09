@@ -49,7 +49,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
     <div>
       {/* Label row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <label style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
+        <label style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)" }}>
           Data <span style={{ color: "#EF4444" }}>*</span>
         </label>
         <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
@@ -83,9 +83,9 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
           style={{
             display: "block",
             width: "100%",
-            minHeight: 110,
-            padding: "10px 12px",
-            fontSize: 12,
+            minHeight: 120,
+            padding: "12px 14px",
+            fontSize: 13,
             fontFamily: "monospace",
             lineHeight: 1.7,
             border: `1.5px solid ${dataRaw ? "var(--brand-light-3)" : "#B0C8CA"}`,

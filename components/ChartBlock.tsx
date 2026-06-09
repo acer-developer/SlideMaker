@@ -17,10 +17,10 @@ interface Props {
 
 const LABEL: React.CSSProperties = {
   display: "block",
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 700,
   textTransform: "uppercase",
-  letterSpacing: "0.07em",
+  letterSpacing: "0.06em",
   color: "var(--muted)",
   marginBottom: 8,
 };
@@ -42,7 +42,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
       {/* Card header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 20px",
+        padding: "14px 24px",
         background: "var(--brand-dark-3)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -55,7 +55,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
           }}>
             {index + 1}
           </span>
-          <span style={{ color: "#fff", fontSize: 14, fontWeight: 600, letterSpacing: "0.01em" }}>
+          <span style={{ color: "#fff", fontSize: 15, fontWeight: 600, letterSpacing: "0.01em" }}>
             Chart {index + 1}
           </span>
         </div>
@@ -76,7 +76,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
       </div>
 
       {/* Card body */}
-      <div style={{ padding: "20px 20px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ padding: "24px 24px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
 
         {/* DATA */}
         <FileUpload
@@ -103,7 +103,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
               width: "100%",
               minHeight: 80,
               padding: "10px 12px",
-              fontSize: 13,
+              fontSize: 14,
               lineHeight: 1.6,
               fontFamily: "inherit",
               border: `1.5px solid ${block.context ? "var(--brand-light-3)" : "#B0C8CA"}`,
@@ -167,7 +167,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
                   width: "100%",
                   minHeight: 90,
                   padding: "10px 12px",
-                  fontSize: 13,
+                  fontSize: 14,
                   lineHeight: 1.6,
                   fontFamily: "inherit",
                   border: "1.5px solid #FCD34D",
