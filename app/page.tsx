@@ -86,6 +86,8 @@ export default function Home() {
     setError(null);
     setGenerated(false);
 
+    let anySuccess = false;
+
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
       setGeneratingStep(`Generating insights for chart ${i + 1} of ${blocks.length}...`);
@@ -93,13 +95,23 @@ export default function Home() {
       try {
         const updates = await generateInsightsFromServer(block);
         setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, ...updates, isGeneratingInsights: false } : b));
-      } catch {
+        anySuccess = true;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        setError(`Chart ${i + 1} failed: ${msg}`);
         setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights: [], kpiTitle: "", kpiSubtitle: "", kpiDescription: "", kpiIcon: "", annotations: [], source: "", slideSubtitle: "", isGeneratingInsights: false } : b));
       }
     }
 
-    setGeneratingStep("Building slide...");
-    await new Promise(r => setTimeout(r, 600));
+    if (!anySuccess) {
+      setIsGenerating(false);
+      setGeneratingStep("");
+      return; // don't show empty preview
+    }
+
+    setGeneratingStep("Building slide preview...");
+    // Give Chart.js time to fully render before showing the preview
+    await new Promise(r => setTimeout(r, 1200));
 
     setIsGenerating(false);
     setGeneratingStep("");
