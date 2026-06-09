@@ -67,8 +67,124 @@ function addBottomAccent(slide, pres) {
   });
 }
 
+// ── Format a number value for KPI display ────────────────────────────────────
+function formatVal(n) {
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  if (Number.isInteger(n)) return n.toString();
+  return n.toFixed(1);
+}
+
+// ── Map chartType string to pptxgenjs chart type + options ───────────────────
+function resolveChartType(pres, chartType) {
+  switch (chartType) {
+    case 'bar-horizontal':
+      return { type: pres.ChartType.bar, extra: { barDir: 'bar' } };
+    case 'stacked-bar':
+      return { type: pres.ChartType.bar, extra: { barDir: 'col', barGrouping: 'stacked' } };
+    case 'line':
+    case 'multi-line':
+      return { type: pres.ChartType.line, extra: {} };
+    case 'area':
+      return { type: pres.ChartType.area, extra: {} };
+    case 'pie':
+      return { type: pres.ChartType.pie, extra: {} };
+    case 'donut':
+      return { type: pres.ChartType.doughnut, extra: {} };
+    case 'scatter':
+      return { type: pres.ChartType.scatter, extra: {} };
+    case 'bar-vertical':
+    case 'grouped-bar':
+    default:
+      return { type: pres.ChartType.bar, extra: { barDir: 'col' } };
+  }
+}
+
+// ── Render a native pptxgenjs chart (or KPI text / placeholder) ──────────────
+function addNativeChart(slide, pres, chartData, x, y, w, h) {
+  const parsed    = (chartData && chartData.parsed) || { labels: [], series: [] };
+  const chartType = (chartData && chartData.chartType) || null;
+
+  // Empty data → placeholder
+  if (!parsed.labels || parsed.labels.length === 0 || !parsed.series || parsed.series.length === 0) {
+    slide.addText('No chart data', {
+      x: I(x), y: I(y + h / 2 - 10),
+      w: I(w), h: I(20),
+      fontSize: 9, color: '8AABAC', fontFace: 'Calibri',
+      align: 'center', valign: 'middle',
+    });
+    return;
+  }
+
+  const { labels, series } = parsed;
+
+  // KPI special case
+  if (chartType === 'kpi') {
+    const val = series[0]?.values[0] ?? (series[0]?.values.reduce((a, b) => a + b, 0) ?? 0);
+    slide.addText(formatVal(val), {
+      x: I(x), y: I(y + h / 2 - 20),
+      w: I(w), h: I(40),
+      fontSize: 32, bold: true, color: '1A4A4C', fontFace: 'Calibri',
+      align: 'center', valign: 'middle',
+    });
+    slide.addText(series[0]?.name || '', {
+      x: I(x), y: I(y + h / 2 + 20),
+      w: I(w), h: I(16),
+      fontSize: 9, color: '3AA4A9', fontFace: 'Calibri', align: 'center',
+    });
+    return;
+  }
+
+  const { type, extra } = resolveChartType(pres, chartType);
+  const isPielike = (chartType === 'pie' || chartType === 'donut');
+  const isMultiSeries = series.length > 1;
+
+  const chartDataArr = series.map(s => ({
+    name: s.name,
+    labels: labels,
+    values: s.values,
+  }));
+
+  const opts = {
+    x: I(x), y: I(y),
+    w: I(w), h: I(h),
+    chartColors: ['3AA4A9', '2E8388', '52B5BA', '6EC7CB', '91DFE2'],
+    lineSize: 2,
+    lineSmooth: false,
+    // Axes
+    showValAxis: !isPielike,
+    showCatAxis: !isPielike,
+    valAxisFontSize: 7,
+    catAxisFontSize: 7,
+    valAxisFontColor: '5C7C7E',
+    catAxisFontColor: '5C7C7E',
+    valGridLine: { style: 'solid', color: 'EEF7F8', size: 0.5 },
+    catGridLine: { style: 'none' },
+    // Data labels
+    showValue: !isPielike,
+    dataLabelFontSize: 7,
+    dataLabelColor: '236567',
+    dataLabelPosition: 'outEnd',
+    // Legend
+    showLegend: isPielike ? true : isMultiSeries,
+    legendFontSize: 7,
+    legendColor: '1A4A4C',
+    legendPos: 'b',
+    // Border
+    plotAreaBorderColor: 'FFFFFF',
+    ...extra,
+  };
+
+  if (isPielike) {
+    opts.showLeaderLines = true;
+    opts.showValue = false;
+  }
+
+  slide.addChart(type, chartDataArr, opts);
+}
+
 // ── Exhibit card with KPI panel (layouts: single, stacked-2) ─────────────────
-function addExhibitWithKPI(slide, pres, exhibit, x, y, availW, exhibitH, imgData) {
+function addExhibitWithKPI(slide, pres, exhibit, x, y, availW, exhibitH, chartData) {
   const chartCardW = availW - KPI_W - H_GAP;
   const kpiX       = x + chartCardW + H_GAP;
   const hasAnns    = Array.isArray(exhibit.annotations) && exhibit.annotations.length > 0;
@@ -77,12 +193,12 @@ function addExhibitWithKPI(slide, pres, exhibit, x, y, availW, exhibitH, imgData
   const srcH       = hasSrc  ? SOURCE_H : 0;
   const chartBodyH = exhibitH - TITLE_ROW_H - annH - srcH;
 
-  addChartCard(slide, pres, exhibit, x, y, chartCardW, exhibitH, chartBodyH, annH, srcH, imgData);
+  addChartCard(slide, pres, exhibit, x, y, chartCardW, exhibitH, chartBodyH, annH, srcH, chartData);
   addKPIPanel(slide, pres, exhibit, kpiX, y, KPI_W, exhibitH);
 }
 
 // ── Chart card ───────────────────────────────────────────────────────────────
-function addChartCard(slide, pres, exhibit, x, y, cardW, cardH, chartBodyH, annH, srcH, imgData) {
+function addChartCard(slide, pres, exhibit, x, y, cardW, cardH, chartBodyH, annH, srcH, chartData) {
   const title   = truncate(exhibit.title || `Chart ${exhibit.exhibitNum || 1}`, 72);
   const BADGE_W = 66;
 
@@ -127,13 +243,7 @@ function addChartCard(slide, pres, exhibit, x, y, cardW, cardH, chartBodyH, annH
     x: I(x), y: I(imgY), w: I(cardW), h: I(chartBodyH),
     fill: { color: C.bg }, line: { color: C.bg },
   });
-  if (imgData) {
-    slide.addImage({
-      data: imgData,
-      x: I(x + 8), y: I(imgY + 6),
-      w: I(cardW - 16), h: I(chartBodyH - 10),
-    });
-  }
+  addNativeChart(slide, pres, chartData, x + 8, imgY + 6, cardW - 16, chartBodyH - 10);
 
   // Period annotations
   if (annH > 0 && exhibit.annotations && exhibit.annotations.length > 0) {
@@ -296,7 +406,7 @@ function addKPIPanel(slide, pres, exhibit, x, y, kpiW, kpiH) {
 }
 
 // ── Compact exhibit card (grid layouts: grid-3, grid-4) ───────────────────────
-function addGridExhibit(slide, pres, exhibit, x, y, cellW, cellH, imgData) {
+function addGridExhibit(slide, pres, exhibit, x, y, cellW, cellH, chartData) {
   const title    = truncate(exhibit.title || `Chart ${exhibit.exhibitNum || 1}`, 60);
   const insights = (exhibit.insights || []).slice(0, 2);
   const insSectionH = insights.length > 0 ? INSPAD * 2 + insights.length * 14 + 4 : 0;
@@ -341,13 +451,7 @@ function addGridExhibit(slide, pres, exhibit, x, y, cellW, cellH, imgData) {
     x: I(x), y: I(bodyY), w: I(cellW), h: I(chartBodyH),
     fill: { color: C.bg }, line: { color: C.bg },
   });
-  if (imgData) {
-    slide.addImage({
-      data: imgData,
-      x: I(x + 6), y: I(bodyY + 5),
-      w: I(cellW - 12), h: I(chartBodyH - 8),
-    });
-  }
+  addNativeChart(slide, pres, chartData, x + 6, bodyY + 5, cellW - 12, chartBodyH - 8);
   // Insight strip
   if (insights.length > 0) {
     const insY = bodyY + chartBodyH;
@@ -417,7 +521,7 @@ function truncate(str, max) {
 }
 
 // ── Main entry point ─────────────────────────────────────────────────────────
-async function renderPPT(PptxGenJS, spec, chartImages) {
+async function renderPPT(PptxGenJS, spec, chartDataArray) {
   const { layout, slideTitle, slideSubtitle, exhibits, takeaways } = spec;
   const count = Math.min((exhibits || []).length, 4);
 
@@ -445,10 +549,10 @@ async function renderPPT(PptxGenJS, spec, chartImages) {
       : Math.floor((availH - STACK_GAP) / 2);
 
     for (let i = 0; i < count; i++) {
-      const exhibit = exhibits[i] || {};
-      const y       = HDR_H + PAD + i * (exhibitH + STACK_GAP);
-      const imgData = chartImages[i] || null;
-      addExhibitWithKPI(slide, pres, exhibit, PAD, y, availW, exhibitH, imgData);
+      const exhibit   = exhibits[i] || {};
+      const y         = HDR_H + PAD + i * (exhibitH + STACK_GAP);
+      const chartData = (chartDataArray && chartDataArray[i]) || null;
+      addExhibitWithKPI(slide, pres, exhibit, PAD, y, availW, exhibitH, chartData);
     }
   }
 
@@ -458,16 +562,16 @@ async function renderPPT(PptxGenJS, spec, chartImages) {
     const cellH = Math.floor((availH - GAP) / 2);
 
     for (let idx = 0; idx < count; idx++) {
-      const exhibit = exhibits[idx] || {};
+      const exhibit   = exhibits[idx] || {};
       let col = idx % 2;
       let row = Math.floor(idx / 2);
       let xOff = 0;
       // 3-chart: centre the third card
       if (count === 3 && idx === 2) { col = 0; row = 1; xOff = (cellW + GAP) / 2; }
-      const x       = PAD + col * (cellW + GAP) + xOff;
-      const y       = HDR_H + PAD + row * (cellH + GAP);
-      const imgData = chartImages[idx] || null;
-      addGridExhibit(slide, pres, exhibit, x, y, cellW, cellH, imgData);
+      const x         = PAD + col * (cellW + GAP) + xOff;
+      const y         = HDR_H + PAD + row * (cellH + GAP);
+      const chartData = (chartDataArray && chartDataArray[idx]) || null;
+      addGridExhibit(slide, pres, exhibit, x, y, cellW, cellH, chartData);
     }
   }
 

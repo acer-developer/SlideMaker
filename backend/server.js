@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const PptxGenJS = require('pptxgenjs');
 const { renderPPT } = require('./pptRenderer');
+const { parseCSV } = require('./parseData');
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
@@ -235,12 +236,15 @@ app.post('/api/generate-ppt', async (req, res) => {
     return res.status(400).json({ error: 'AI slide design failed: ' + e.message });
   }
 
-  // ── Chart images sent by frontend (base64 PNG from canvas) ────────────────
-  const chartImages = blocks.map(b => b.chartImage || null);
+  // ── Parse chart data for native rendering ────────────────────────────────
+  const chartDataArray = blocks.map(b => ({
+    parsed: parseCSV(b.dataRaw || ''),
+    chartType: b.chartType || null,
+  }));
 
   // ── Render to PPTX ────────────────────────────────────────────────────────
   try {
-    const buffer = await renderPPT(PptxGenJS, spec, chartImages);
+    const buffer = await renderPPT(PptxGenJS, spec, chartDataArray);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     res.setHeader('Content-Disposition', 'attachment; filename="slidemaker-slide.pptx"');
     res.send(buffer);
