@@ -4,6 +4,7 @@ export interface Annotation {
   period: string;
   label: string;
   description: string;
+  icon: string;
 }
 
 export interface ChartBlock {
@@ -15,8 +16,12 @@ export interface ChartBlock {
   chartType: ChartTypeId | null;
   insights: string[];
   isGeneratingInsights: boolean;
+  // AI-generated fields
   kpiTitle: string;
   kpiSubtitle: string;
   kpiDescription: string;
+  kpiIcon: string;
   annotations: Annotation[];
+  source: string;
+  slideSubtitle: string;
 }

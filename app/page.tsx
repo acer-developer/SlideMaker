@@ -21,7 +21,10 @@ function makeBlock(): ChartBlockType {
     kpiTitle: "",
     kpiSubtitle: "",
     kpiDescription: "",
+    kpiIcon: "",
     annotations: [],
+    source: "",
+    slideSubtitle: "",
   };
 }
 
@@ -91,7 +94,7 @@ export default function Home() {
         const updates = await generateInsightsFromServer(block);
         setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, ...updates, isGeneratingInsights: false } : b));
       } catch {
-        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights: [], kpiTitle: "", kpiSubtitle: "", kpiDescription: "", annotations: [], isGeneratingInsights: false } : b));
+        setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, insights: [], kpiTitle: "", kpiSubtitle: "", kpiDescription: "", kpiIcon: "", annotations: [], source: "", slideSubtitle: "", isGeneratingInsights: false } : b));
       }
     }
 
@@ -306,6 +309,7 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<Partia
       dataRaw: block.dataRaw,
       context: block.context,
       instructions: block.instructions,
+      chartType: block.chartType,
       ...(apiKey ? { apiKey, provider } : {}),
     }),
   });
@@ -316,7 +320,10 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<Partia
     kpiTitle: data.kpiTitle ?? '',
     kpiSubtitle: data.kpiSubtitle ?? '',
     kpiDescription: data.kpiDescription ?? '',
+    kpiIcon: data.kpiIcon ?? '',
     annotations: data.annotations ?? [],
+    source: data.source ?? '',
+    slideSubtitle: data.slideSubtitle ?? '',
   };
 }
 
