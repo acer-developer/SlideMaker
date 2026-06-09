@@ -46,7 +46,7 @@ const BAR_DATALABELS = {
 
 // datalabels config for line points
 const LINE_DATALABELS = {
-  anchor: 'top' as const,
+  anchor: 'end' as const,
   align: 'top' as const,
   offset: 4,
   font: { size: 8, weight: 'bold' as const, family: "'APTOEX','Inter',sans-serif" },
