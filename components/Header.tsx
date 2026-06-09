@@ -11,7 +11,7 @@ export default function Header() {
     }}>
       <div style={{
         maxWidth: 1000, margin: "0 auto",
-        padding: "0 36px", height: 60,
+        padding: "0 36px", height: 72,
         display: "flex", alignItems: "center",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

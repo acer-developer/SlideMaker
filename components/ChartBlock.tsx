@@ -42,7 +42,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
       {/* Card header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "14px 24px",
+        padding: "16px 28px",
         background: "var(--brand-dark-3)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -76,7 +76,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
       </div>
 
       {/* Card body */}
-      <div style={{ padding: "24px 24px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ padding: "28px 28px 32px", display: "flex", flexDirection: "column", gap: 28 }}>
 
         {/* DATA */}
         <FileUpload
@@ -101,8 +101,8 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
             style={{
               display: "block",
               width: "100%",
-              minHeight: 80,
-              padding: "10px 12px",
+              minHeight: 100,
+              padding: "12px 14px",
               fontSize: 14,
               lineHeight: 1.6,
               fontFamily: "inherit",
@@ -137,7 +137,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
             style={{
               width: "100%",
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "11px 16px",
+              padding: "14px 20px",
               background: "transparent", border: "none", cursor: "pointer",
             }}
           >
@@ -156,7 +156,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
           </button>
 
           {showInstructions && (
-            <div style={{ padding: "0 16px 16px" }}>
+            <div style={{ padding: "0 20px 20px" }}>
               <textarea
                 placeholder="e.g. Highlight the Q3 spike. Note that growth came from the enterprise segment. Keep tone formal and concise. Focus on the YoY comparison."
                 value={block.instructions}
@@ -165,7 +165,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
                 style={{
                   display: "block",
                   width: "100%",
-                  minHeight: 90,
+                  minHeight: 110,
                   padding: "10px 12px",
                   fontSize: 14,
                   lineHeight: 1.6,

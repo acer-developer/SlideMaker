@@ -41,7 +41,7 @@ export default function ChartTypeSelector({ value, onChange }: Props) {
               title={ct.description}
               style={{
                 display: "flex", flexDirection: "column", alignItems: "center",
-                gap: 4, padding: "10px 4px",
+                gap: 6, padding: "14px 4px",
                 borderRadius: 12,
                 border: `1.5px solid ${selected ? "var(--brand-primary)" : "#B0C8CA"}`,
                 background: selected ? "var(--brand-light-5)" : "#fff",

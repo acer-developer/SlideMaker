@@ -105,10 +105,10 @@ export default function Home() {
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
       <Header />
 
-      <main style={{ flex: 1, width: "100%", maxWidth: 1000, margin: "0 auto", padding: "48px 36px 80px" }}>
+      <main style={{ flex: 1, width: "100%", maxWidth: 1000, margin: "0 auto", padding: "60px 36px 100px" }}>
 
         {/* Page title */}
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 48 }}>
           <h1 style={{ fontSize: 30, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 8, letterSpacing: "-0.02em" }}>
             Build Your Research Slide
           </h1>
@@ -131,7 +131,7 @@ export default function Home() {
         )}
 
         {/* Chart blocks */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 20 }}>
           {blocks.map((block, i) => (
             <ChartBlock
               key={block.id}
@@ -151,7 +151,7 @@ export default function Home() {
             onClick={addBlock}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 8, padding: "14px 16px", borderRadius: 14,
+              gap: 8, padding: "18px 16px", borderRadius: 14,
               border: "2px dashed #B0C8CA", color: "var(--muted)",
               background: "transparent", fontSize: 14, fontWeight: 500,
               cursor: "pointer", marginBottom: 12, transition: "all 0.2s",
@@ -171,8 +171,8 @@ export default function Home() {
             disabled={isGenerating || !allReady}
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-              gap: 10, padding: "16px 24px", borderRadius: 14, border: "none",
-              fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 32,
+              gap: 10, padding: "18px 24px", borderRadius: 14, border: "none",
+              fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 36,
               background: isGenerating || !allReady ? "#94A3B8" : "var(--brand-dark-3)",
               cursor: isGenerating || !allReady ? "not-allowed" : "pointer",
               boxShadow: !isGenerating && allReady ? "0 4px 16px rgba(26,74,76,0.25)" : "none",

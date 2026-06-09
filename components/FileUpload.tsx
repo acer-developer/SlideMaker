@@ -83,8 +83,8 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
           style={{
             display: "block",
             width: "100%",
-            minHeight: 120,
-            padding: "12px 14px",
+            minHeight: 150,
+            padding: "14px 16px",
             fontSize: 13,
             fontFamily: "monospace",
             lineHeight: 1.7,
@@ -120,7 +120,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
               onClick={() => fileRef.current?.click()}
               style={{
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                gap: 6, padding: "28px 16px",
+                gap: 8, padding: "40px 16px",
                 border: `2px dashed ${dragging ? "var(--brand-primary)" : "#B0C8CA"}`,
                 borderRadius: 10,
                 background: dragging ? "var(--brand-light-5)" : "#FAFEFE",
