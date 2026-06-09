@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import type { ChartBlock as ChartBlockType } from "@/lib/types";
@@ -17,7 +17,7 @@ interface Props {
 
 const LABEL: React.CSSProperties = {
   display: "block",
-  fontSize: 12,
+  fontSize: 16,
   fontWeight: 700,
   textTransform: "uppercase",
   letterSpacing: "0.06em",
@@ -49,13 +49,13 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
           <span style={{
             width: 22, height: 22, borderRadius: "50%",
             background: "var(--brand-primary)", color: "#fff",
-            fontSize: 11, fontWeight: 700,
+            fontSize: 17, fontWeight: 700,
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
             {index + 1}
           </span>
-          <span style={{ color: "#fff", fontSize: 15, fontWeight: 600, letterSpacing: "0.01em" }}>
+          <span style={{ color: "#fff", fontSize: 17, fontWeight: 600, letterSpacing: "0.01em" }}>
             Chart {index + 1}
           </span>
         </div>
@@ -64,7 +64,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
             onClick={() => onRemove(block.id)}
             style={{
               display: "flex", alignItems: "center", gap: 4,
-              fontSize: 11, fontWeight: 500,
+              fontSize: 17, fontWeight: 500,
               padding: "4px 10px", borderRadius: 8,
               color: "#FCA5A5", background: "rgba(239,68,68,0.15)",
               border: "none", cursor: "pointer",
@@ -103,7 +103,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
               width: "100%",
               minHeight: 100,
               padding: "12px 14px",
-              fontSize: 14,
+              fontSize: 16,
               lineHeight: 1.6,
               fontFamily: "inherit",
               border: `1.5px solid ${block.context ? "var(--brand-light-3)" : "#B0C8CA"}`,
@@ -114,7 +114,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
               resize: "vertical",
             }}
           />
-          <div style={{ textAlign: "right", fontSize: 10, color: "var(--placeholder)", marginTop: 4 }}>
+          <div style={{ textAlign: "right", fontSize: 16, color: "var(--placeholder)", marginTop: 4 }}>
             {block.context.length} / 1200
           </div>
         </div>
@@ -142,10 +142,10 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
+              <span style={{ fontSize: 17, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
                 Instructions
               </span>
-              <span style={{ fontSize: 11, color: "var(--placeholder)" }}>
+              <span style={{ fontSize: 17, color: "var(--placeholder)" }}>
                 AI follows these strictly
               </span>
             </div>
@@ -167,7 +167,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
                   width: "100%",
                   minHeight: 110,
                   padding: "10px 12px",
-                  fontSize: 14,
+                  fontSize: 16,
                   lineHeight: 1.6,
                   fontFamily: "inherit",
                   border: "1.5px solid #FCD34D",
@@ -178,7 +178,7 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
                   resize: "vertical",
                 }}
               />
-              <div style={{ textAlign: "right", fontSize: 10, color: "var(--placeholder)", marginTop: 4 }}>
+              <div style={{ textAlign: "right", fontSize: 16, color: "var(--placeholder)", marginTop: 4 }}>
                 {block.instructions.length} / 1500
               </div>
             </div>
@@ -189,3 +189,4 @@ export default function ChartBlock({ block, index, total, onChange, onRemove, di
     </div>
   );
 }
+

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "slidemaker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\Users\\Dell\\Desktop\\Claude\\projects\\slidemaker",
+      "port": 3000
+    }
+  ]
+}

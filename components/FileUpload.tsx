@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useRef, useState } from "react";
 import { UploadCloud, FileText, X } from "lucide-react";
 
@@ -49,7 +49,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
     <div>
       {/* Label row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <label style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)" }}>
+        <label style={{ fontSize: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--muted)" }}>
           Data <span style={{ color: "#EF4444" }}>*</span>
         </label>
         <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
@@ -59,7 +59,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
               onClick={() => setTab(t)}
               style={{
                 padding: "4px 12px",
-                fontSize: 11,
+                fontSize: 17,
                 fontWeight: 600,
                 background: tab === t ? "var(--brand-dark-3)" : "#fff",
                 color: tab === t ? "#fff" : "var(--muted)",
@@ -85,7 +85,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
             width: "100%",
             minHeight: 150,
             padding: "14px 16px",
-            fontSize: 13,
+            fontSize: 17,
             fontFamily: "monospace",
             lineHeight: 1.7,
             border: `1.5px solid ${dataRaw ? "var(--brand-light-3)" : "#B0C8CA"}`,
@@ -106,7 +106,7 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <FileText size={14} style={{ color: "var(--brand-primary)" }} />
-                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--brand-dark-2)" }}>{fileName}</span>
+                <span style={{ fontSize: 17, fontWeight: 500, color: "var(--brand-dark-2)" }}>{fileName}</span>
               </div>
               <button onClick={clearFile} style={{ color: "var(--muted)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center" }}>
                 <X size={14} />
@@ -128,10 +128,10 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
               }}
             >
               <UploadCloud size={22} style={{ color: dragging ? "var(--brand-primary)" : "var(--brand-light-2)" }} />
-              <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>
+              <p style={{ fontSize: 17, color: "var(--muted)", margin: 0 }}>
                 Drop file or <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>browse</span>
               </p>
-              <p style={{ fontSize: 11, color: "var(--placeholder)", margin: 0 }}>CSV, Excel (.xlsx), TXT</p>
+              <p style={{ fontSize: 17, color: "var(--placeholder)", margin: 0 }}>CSV, Excel (.xlsx), TXT</p>
             </div>
           )}
           <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,.txt" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f); }} />
@@ -140,3 +140,4 @@ export default function FileUpload({ fileName, dataRaw, onDataChange }: Props) {
     </div>
   );
 }
+

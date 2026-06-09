@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { Layers } from "lucide-react";
 
 export default function Header() {
@@ -23,7 +23,7 @@ export default function Header() {
           }}>
             <Layers size={15} color="var(--brand-light-3)" strokeWidth={2} />
           </div>
-          <span style={{ fontWeight: 700, fontSize: 18, color: "var(--brand-dark-3)", letterSpacing: "-0.01em" }}>
+          <span style={{ fontWeight: 700, fontSize: 21, color: "var(--brand-dark-3)", letterSpacing: "-0.01em" }}>
             SlideMaker
           </span>
         </div>
@@ -31,3 +31,4 @@ export default function Header() {
     </header>
   );
 }
+

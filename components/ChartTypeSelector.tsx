@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { CHART_TYPES } from "@/lib/chartTypes";
 import type { ChartTypeId } from "@/lib/chartTypes";
 
@@ -13,17 +13,17 @@ export default function ChartTypeSelector({ value, onChange }: Props) {
       {/* Label row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
+          <span style={{ fontSize: 17, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--muted)" }}>
             Chart Type
           </span>
-          <span style={{ fontSize: 11, color: "var(--placeholder)" }}>
+          <span style={{ fontSize: 17, color: "var(--placeholder)" }}>
             optional, AI picks if blank
           </span>
         </div>
         {value && (
           <button
             onClick={() => onChange(null)}
-            style={{ fontSize: 11, fontWeight: 500, color: "var(--brand-dark-1)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            style={{ fontSize: 17, fontWeight: 500, color: "var(--brand-dark-1)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             Clear
           </button>
@@ -50,8 +50,8 @@ export default function ChartTypeSelector({ value, onChange }: Props) {
                 cursor: "pointer",
               }}
             >
-              <span style={{ fontSize: 18, lineHeight: 1 }}>{ct.icon}</span>
-              <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.2, textAlign: "center" }}>{ct.label}</span>
+              <span style={{ fontSize: 21, lineHeight: 1 }}>{ct.icon}</span>
+              <span style={{ fontSize: 17, fontWeight: 500, lineHeight: 1.2, textAlign: "center" }}>{ct.label}</span>
             </button>
           );
         })}
@@ -59,3 +59,4 @@ export default function ChartTypeSelector({ value, onChange }: Props) {
     </div>
   );
 }
+

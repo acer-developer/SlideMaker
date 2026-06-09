@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useCallback } from "react";
 import { Plus, Sparkles, Loader2, Download, Eye, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Header from "@/components/Header";
@@ -109,10 +109,10 @@ export default function Home() {
 
         {/* Page title */}
         <div style={{ marginBottom: 48 }}>
-          <h1 style={{ fontSize: 30, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 8, letterSpacing: "-0.02em" }}>
+          <h1 style={{ fontSize: 34, fontWeight: 700, color: "var(--brand-dark-3)", marginBottom: 8, letterSpacing: "-0.02em" }}>
             Build Your Research Slide
           </h1>
-          <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 17, color: "var(--muted)", lineHeight: 1.5 }}>
             Add your data and context below, generate insights, then download as an A4 PPT.
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function Home() {
             display: "flex", alignItems: "center", gap: 10,
             padding: "12px 16px", borderRadius: 12, marginBottom: 20,
             background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B",
-            fontSize: 13,
+            fontSize: 17,
           }}>
             <AlertTriangle size={15} />
             {error}
@@ -153,7 +153,7 @@ export default function Home() {
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
               gap: 8, padding: "18px 16px", borderRadius: 14,
               border: "2px dashed #B0C8CA", color: "var(--muted)",
-              background: "transparent", fontSize: 14, fontWeight: 500,
+              background: "transparent", fontSize: 16, fontWeight: 500,
               cursor: "pointer", marginBottom: 12, transition: "all 0.2s",
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--brand-primary)"; e.currentTarget.style.color = "var(--brand-primary)"; e.currentTarget.style.background = "var(--brand-light-5)"; }}
@@ -172,7 +172,7 @@ export default function Home() {
             style={{
               width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
               gap: 10, padding: "18px 24px", borderRadius: 14, border: "none",
-              fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 36,
+              fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 36,
               background: isGenerating || !allReady ? "#94A3B8" : "var(--brand-dark-3)",
               cursor: isGenerating || !allReady ? "not-allowed" : "pointer",
               boxShadow: !isGenerating && allReady ? "0 4px 16px rgba(26,74,76,0.25)" : "none",
@@ -192,7 +192,7 @@ export default function Home() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
             {/* Success badge + re-generate */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#059669" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 600, color: "#059669" }}>
                 <CheckCircle2 size={16} />
                 Slide generated
               </div>
@@ -209,14 +209,14 @@ export default function Home() {
             <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)", background: "#0A1E1F" }}>
               {/* Preview toolbar */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #1A4A4C" }}>
-                <span style={{ fontSize: 12, fontWeight: 500, color: "#91DFE2" }}>
+                <span style={{ fontSize: 16, fontWeight: 500, color: "#91DFE2" }}>
                   Slide Preview - A4 Portrait
                 </span>
                 <button
                   onClick={() => setShowPreview(true)}
                   style={{
                     display: "flex", alignItems: "center", gap: 6,
-                    fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                    fontSize: 17, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
                     background: "#1A4A4C", color: "#D5F6F7", border: "none", cursor: "pointer",
                     transition: "all 0.2s",
                   }}
@@ -241,7 +241,7 @@ export default function Home() {
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
                 gap: 10, padding: "16px 24px", borderRadius: 14, border: "none",
-                fontSize: 15, fontWeight: 700, color: "#fff",
+                fontSize: 17, fontWeight: 700, color: "#fff",
                 background: isExporting ? "#94A3B8" : "var(--brand-primary)",
                 cursor: isExporting ? "not-allowed" : "pointer",
                 boxShadow: !isExporting ? "0 4px 16px rgba(58,164,169,0.3)" : "none",
@@ -281,3 +281,4 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<string
   if (!res.ok) throw new Error(data.error ?? 'Generation failed');
   return data.insights ?? [];
 }
+
