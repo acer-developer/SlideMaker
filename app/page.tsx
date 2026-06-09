@@ -37,6 +37,7 @@ export default function Home() {
   const [isExporting, setIsExporting] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pptError, setPptError] = useState<string | null>(null);
   const [generatingStep, setGeneratingStep] = useState("");
 
   useEffect(() => {
@@ -120,13 +121,13 @@ export default function Home() {
 
   async function handleDownload() {
     setIsExporting(true);
+    setPptError(null);
     try {
       const { generatePPT } = await import("@/lib/pptGenerator");
       await generatePPT(blocks);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown error";
-      setError("PPT export failed: " + message);
-      setTimeout(() => setError(null), 5000);
+      setPptError(message);
     } finally {
       setIsExporting(false);
     }
@@ -282,11 +283,38 @@ export default function Home() {
               }}
             >
               {isExporting ? (
-                <><Loader2 size={16} className="animate-spin" /> Building PPT...</>
+                <><Loader2 size={16} className="animate-spin" /> Building PPT with AI...</>
               ) : (
                 <><Download size={16} /> Download PPT</>
               )}
             </button>
+
+            {/* Inline PPT error — shown right below the button */}
+            {pptError && (
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 10,
+                padding: "14px 16px", borderRadius: 12,
+                background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B",
+                fontSize: 15, lineHeight: 1.5,
+              }}>
+                <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong>PPT generation failed</strong><br />
+                  {pptError}
+                  {pptError.toLowerCase().includes("key") && (
+                    <span>
+                      {" — "}
+                      <button
+                        onClick={() => { setPptError(null); setShowSettings(true); }}
+                        style={{ color: "#DC2626", fontWeight: 700, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: 0 }}
+                      >
+                        Open BYOK settings
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
