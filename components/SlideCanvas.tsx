@@ -438,7 +438,7 @@ export default function SlideCanvas({ blocks }: Props) {
 
   return (
     <div
-      className="slide-font"
+      className="slide-font slide-canvas-root"
       style={{
         width: A4_W, height: A4_H,
         position: "relative",

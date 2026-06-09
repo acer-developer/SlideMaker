@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const PptxGenJS = require('pptxgenjs');
+const { renderPPT } = require('./pptRenderer');
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '20mb' })); // larger limit for chart images
 
 app.get('/health', (_, res) => res.json({ status: 'ok', service: 'slidemaker-api' }));
 
@@ -200,6 +202,146 @@ function parseResponse(text) {
     slideSubtitle: '',
     annotations: [],
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/generate-ppt
+// AI designs the complete slide spec, backend renders a real editable PPTX.
+// ─────────────────────────────────────────────────────────────────────────────
+app.post('/api/generate-ppt', async (req, res) => {
+  const { blocks, apiKey, provider } = req.body;
+  if (!blocks || !Array.isArray(blocks) || blocks.length === 0) {
+    return res.status(400).json({ error: 'blocks array is required' });
+  }
+
+  const prompt = buildPPTPrompt(blocks);
+
+  // ── Call AI to get the slide spec ──────────────────────────────────────────
+  let spec;
+  try {
+    if (apiKey && provider === 'openrouter') {
+      spec = await callOpenRouter(apiKey, prompt);
+    } else if (apiKey && provider === 'nvidia') {
+      spec = await callNvidia(apiKey, prompt);
+    } else if (process.env.OPENROUTER_API_KEY) {
+      spec = await callOpenRouter(process.env.OPENROUTER_API_KEY, prompt);
+    } else if (process.env.NVIDIA_API_KEY) {
+      spec = await callNvidia(process.env.NVIDIA_API_KEY, prompt);
+    } else {
+      return res.status(503).json({ error: 'No AI key available. Add your key in BYOK settings.' });
+    }
+  } catch (e) {
+    console.error('PPT spec AI call failed:', e.message);
+    return res.status(400).json({ error: 'AI slide design failed: ' + e.message });
+  }
+
+  // ── Chart images sent by frontend (base64 PNG from canvas) ────────────────
+  const chartImages = blocks.map(b => b.chartImage || null);
+
+  // ── Render to PPTX ────────────────────────────────────────────────────────
+  try {
+    const buffer = await renderPPT(PptxGenJS, spec, chartImages);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader('Content-Disposition', 'attachment; filename="slidemaker-slide.pptx"');
+    res.send(buffer);
+  } catch (e) {
+    console.error('PPT render failed:', e.message, e.stack);
+    res.status(500).json({ error: 'PPT render failed: ' + e.message });
+  }
+});
+
+// ── Build the AI prompt for slide design ─────────────────────────────────────
+function buildPPTPrompt(blocks) {
+  const count = blocks.length;
+  const layoutMap = { 1: 'single', 2: 'stacked-2', 3: 'grid-3', 4: 'grid-4' };
+  const layout = layoutMap[Math.min(count, 4)] || 'single';
+
+  const chartDesc = blocks.map((b, i) => {
+    const lines = [
+      `CHART ${i + 1}:`,
+      `  Context: ${b.context || ''}`,
+      `  Chart type: ${b.chartType || 'auto'}`,
+      `  Data:\n${(b.dataRaw || '').slice(0, 500)}`,
+    ];
+    if (b.kpiTitle)       lines.push(`  Previously generated KPI title: ${b.kpiTitle}`);
+    if (b.kpiSubtitle)    lines.push(`  Previously generated KPI metric: ${b.kpiSubtitle}`);
+    if (b.kpiDescription) lines.push(`  Previously generated KPI description: ${b.kpiDescription}`);
+    if (b.kpiIcon)        lines.push(`  Previously generated KPI icon: ${b.kpiIcon}`);
+    if (b.insights?.length) lines.push(`  Previously generated insights:\n${b.insights.map((s, j) => `    ${j + 1}. ${s}`).join('\n')}`);
+    if (b.annotations?.length) lines.push(`  Previously generated annotations: ${JSON.stringify(b.annotations)}`);
+    if (b.source)         lines.push(`  Source: ${b.source}`);
+    if (b.slideSubtitle)  lines.push(`  Previously generated slide subtitle: ${b.slideSubtitle}`);
+    return lines.join('\n');
+  }).join('\n\n---\n\n');
+
+  const kpiBlock = layout === 'single' || layout === 'stacked-2'
+    ? `      "kpi": {
+        "icon": "single most relevant emoji",
+        "title": "2-5 WORD NOUN PHRASE — NOT a sentence",
+        "keyMetric": "One data-backed sentence with exact number + timeframe. Max 18 words.",
+        "description": "2-3 consulting sentences with specific data. No em dashes."
+      },
+      "annotations": [
+        { "period": "first time range", "label": "2-3 word phase", "description": "15-20 words, ≥1 specific number", "icon": "emoji" },
+        { "period": "second range",     "label": "phase name",    "description": "insight with number",           "icon": "emoji" },
+        { "period": "third range",      "label": "phase name",    "description": "insight with number",           "icon": "emoji" }
+      ],`
+    : `      "insights": [
+        "insight 1 for this chart only, 15-20 words",
+        "insight 2 for this chart only"
+      ],`;
+
+  return `You are a BCG senior presentation designer. Generate a complete professional A4 PowerPoint slide specification.
+
+PAGE SIZE: 8.27 inches × 11.69 inches (A4 portrait)
+NUMBER OF CHARTS: ${count}
+LAYOUT TO USE: "${layout}"
+
+${chartDesc}
+
+DESIGN REQUIREMENTS:
+- BCG/McKinsey professional style: white background, teal (#3AA4A9) accents, dark teal (#1A4A4C) for headers
+- Each exhibit has: teal badge section left + dark title bar right + teal bottom accent on title bar
+- Layout "${layout}":
+  ${layout === 'single'    ? '1 chart full width + KPI panel on the right (190px)' : ''}
+  ${layout === 'stacked-2' ? '2 charts stacked vertically, each with KPI panel on the right' : ''}
+  ${layout === 'grid-3'    ? '3 charts in a grid: 2 on top row + 1 centred on bottom row; compact, no KPI panels' : ''}
+  ${layout === 'grid-4'    ? '4 charts in a 2×2 grid; compact, no KPI panels' : ''}
+- For stacked/single: each exhibit has 3 period annotations below chart + source line
+- Key Takeaways section at the very bottom with ✓ bullet points
+- No em dashes anywhere — use hyphens
+
+Return ONLY valid JSON with NO markdown fences, NO explanation:
+
+{
+  "layout": "${layout}",
+  "slideTitle": "ALL CAPS, MAX 8 WORDS, ANALYTICAL THEME",
+  "slideSubtitle": "1-2 sentences capturing the macro story (20-35 words). No em dashes.",
+  "exhibits": [
+    {
+      "exhibitNum": 1,
+      "title": "Descriptive title with timeframe in parentheses",
+      "chartIndex": 0,
+${kpiBlock}
+      "source": "Source name if mentioned, else empty string"
+    }${count > 1 ? ` — repeat for each of the ${count} charts` : ''}
+  ],
+  "takeaways": [
+    "Insight 1: lead with a specific % or value. Wrap 1-3 KEY TERMS in [[double brackets]] for bold highlighting. 15-25 words.",
+    "Insight 2: different analytical angle. Wrap key terms in [[double brackets]].",
+    "Insight 3: third distinct insight with data point.",
+    "Insight 4: forward-looking or comparative takeaway."
+  ]
+}
+
+STRICT RULES:
+- ALL numbers must come from the actual data provided — never fabricate
+- No em dashes or en dashes (— or –) anywhere; use hyphens (-)
+- annotations: EXACTLY 3 entries covering the FULL time range in the data
+- takeaways: 3-5 items total for the whole slide
+- exhibitNum starts at 1 and increments per chart
+- kpi.title: noun phrase ONLY — never a full sentence
+- [[keyword]] only in takeaways items — wrap 1-3 key terms per bullet`;
 }
 
 const PORT = process.env.PORT || 4000;
