@@ -14,8 +14,16 @@ import type { ChartBlock } from "./types";
  *  - The output is a proper editable PPTX — real text boxes, shapes, native charts.
  *  - No fragile client-side canvas capture; rendering is deterministic template-based.
  */
+function getApiUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+    return "https://slidemaker-backend.onrender.com";
+  }
+  return "http://localhost:4000";
+}
+
 export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
-  const apiUrl     = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const apiUrl     = getApiUrl();
   const provider   = localStorage.getItem("slidemaker_provider") || "openrouter";
   const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
   const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);

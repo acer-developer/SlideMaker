@@ -1,6 +1,6 @@
 ﻿"use client";
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Sparkles, Loader2, Download, Eye, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, Sparkles, Loader2, Download, Eye, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import Header from "@/components/Header";
 import ChartBlock from "@/components/ChartBlock";
 import PreviewModal from "@/components/PreviewModal";
@@ -66,7 +66,6 @@ export default function Home() {
   function addBlock() {
     if (blocks.length >= 4) {
       setError("Maximum 4 charts per slide.");
-      setTimeout(() => setError(null), 3000);
       return;
     }
     setBlocks(prev => [...prev, makeBlock()]);
@@ -83,7 +82,7 @@ export default function Home() {
 
   async function handleGenerate() {
     const err = validate();
-    if (err) { setError(err); setTimeout(() => setError(null), 4000); return; }
+    if (err) { setError(err); return; }
 
     setIsGenerating(true);
     setError(null);
@@ -153,18 +152,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Error banner */}
-        {error && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "12px 16px", borderRadius: 12, marginBottom: 20,
-            background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B",
-            fontSize: 17,
-          }}>
-            <AlertTriangle size={15} />
-            {error}
-          </div>
-        )}
+        {/* Error banner removed — errors now shown in popup modal below */}
 
         {/* Chart blocks */}
         <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 20 }}>
@@ -291,32 +279,7 @@ export default function Home() {
               )}
             </button>
 
-            {/* Inline PPT error — shown right below the button */}
-            {pptError && (
-              <div style={{
-                display: "flex", alignItems: "flex-start", gap: 10,
-                padding: "14px 16px", borderRadius: 12,
-                background: "#FEF2F2", border: "1px solid #FECACA", color: "#991B1B",
-                fontSize: 15, lineHeight: 1.5,
-              }}>
-                <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-                <div>
-                  <strong>PPT generation failed</strong><br />
-                  {pptError}
-                  {pptError.toLowerCase().includes("key") && (
-                    <span>
-                      {" — "}
-                      <button
-                        onClick={() => { setPptError(null); setShowSettings(true); }}
-                        style={{ color: "#DC2626", fontWeight: 700, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", fontSize: 15, padding: 0 }}
-                      >
-                        Open BYOK settings
-                      </button>
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* PPT error shown in popup modal below */}
           </div>
         )}
       </main>
@@ -336,12 +299,99 @@ export default function Home() {
           onSave={handleSettingsSave}
         />
       )}
+
+      {/* ── Unified Error Popup ────────────────────────────────────────── */}
+      {(error || pptError) && (
+        <div
+          onClick={() => { setError(null); setPptError(null); }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(10,20,20,0.55)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 20, padding: "32px 28px",
+              maxWidth: 460, width: "100%",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.28)",
+              border: "1px solid #FCA5A5",
+            }}
+          >
+            {/* Header row */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 16 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <AlertTriangle size={22} color="#DC2626" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: "#991B1B", marginBottom: 4 }}>
+                  {pptError ? "PPT generation failed" : "Generation failed"}
+                </div>
+                <p style={{ fontSize: 14, color: "#6B7280", margin: 0, lineHeight: 1.5 }}>
+                  {error || pptError}
+                </p>
+              </div>
+              <button
+                onClick={() => { setError(null); setPptError(null); }}
+                style={{
+                  background: "#F3F4F6", border: "none", borderRadius: 8,
+                  width: 32, height: 32, display: "flex", alignItems: "center",
+                  justifyContent: "center", cursor: "pointer", flexShrink: 0,
+                  color: "#6B7280",
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24 }}>
+              {(error || pptError)?.toLowerCase().includes("key") && (
+                <button
+                  onClick={() => { setError(null); setPptError(null); setShowSettings(true); }}
+                  style={{
+                    padding: "9px 18px", borderRadius: 10, border: "none",
+                    background: "var(--brand-primary)", color: "#fff",
+                    fontWeight: 600, cursor: "pointer", fontSize: 14,
+                  }}
+                >
+                  Open Settings
+                </button>
+              )}
+              <button
+                onClick={() => { setError(null); setPptError(null); }}
+                style={{
+                  padding: "9px 18px", borderRadius: 10,
+                  border: "1px solid #E5E7EB", background: "#F9FAFB",
+                  color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: 14,
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+function getApiUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  // On live deployment (not localhost) fall back to the Render backend
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+    return 'https://slidemaker-backend.onrender.com';
+  }
+  return 'http://localhost:4000';
+}
+
 async function generateInsightsFromServer(block: ChartBlockType): Promise<Partial<ChartBlockType>> {
-  const apiUrl     = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiUrl     = getApiUrl();
   const provider   = localStorage.getItem("slidemaker_provider") || "openrouter";
   const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
   const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);
