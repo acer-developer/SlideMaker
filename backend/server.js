@@ -268,9 +268,10 @@ async function callOpenRouterRaw(key, prompt) {
     body: JSON.stringify({
       model: 'meta-llama/llama-3.3-70b-instruct:free',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2000,
+      max_tokens: 1200,
       temperature: 0.2,
     }),
+    signal: AbortSignal.timeout(55000),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message ?? 'OpenRouter error');
@@ -287,9 +288,10 @@ async function callNvidiaRaw(key, prompt) {
     body: JSON.stringify({
       model: 'meta/llama-3.1-70b-instruct',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2000,
+      max_tokens: 1200,
       temperature: 0.2,
     }),
+    signal: AbortSignal.timeout(55000),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail ?? 'NVIDIA NIM error');

@@ -21,14 +21,30 @@ export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
   const apiKey     = useDefault ? undefined : (localStorage.getItem(`slidemaker_${provider}_key`) || undefined);
 
   // ── 1. Call backend → AI designs spec → renders PPTX (native charts) ──────
-  const res = await fetch(`${apiUrl}/api/generate-ppt`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      blocks,  // dataRaw + chartType sent directly; backend parses and renders natively
-      ...(apiKey ? { apiKey, provider } : {}),
-    }),
-  });
+  // 90-second timeout — AI on free-tier can take 60-90s on first call
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 90_000);
+
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}/api/generate-ppt`, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blocks,  // dataRaw + chartType sent directly; backend parses and renders natively
+        ...(apiKey ? { apiKey, provider } : {}),
+      }),
+      signal: controller.signal,
+    });
+  } catch (e: unknown) {
+    clearTimeout(timeoutId);
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error("PPT generation timed out after 90 seconds — AI is busy, please try again.");
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!res.ok) {
     // Backend returns JSON error

@@ -285,7 +285,7 @@ export default function Home() {
               }}
             >
               {isExporting ? (
-                <><Loader2 size={16} className="animate-spin" /> Building PPT with AI...</>
+                <><Loader2 size={16} className="animate-spin" /> Designing slide&hellip; (~30-60s)</>
               ) : (
                 <><Download size={16} /> Download PPT</>
               )}
