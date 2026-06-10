@@ -39,6 +39,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [pptError, setPptError] = useState<string | null>(null);
   const [generatingStep, setGeneratingStep] = useState("");
+  const [providerStatus, setProviderStatus] = useState<{ label: string; keyType: string } | null>(null);
 
   useEffect(() => {
     const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
@@ -89,6 +90,17 @@ export default function Home() {
     return null;
   }
 
+  // Determine loading label from localStorage (before AI call, so we can show it during wait)
+  function getProviderLoadingLabel(): string {
+    const prov       = localStorage.getItem("slidemaker_provider") || "openrouter";
+    const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
+    const hasByok    = !!localStorage.getItem(`slidemaker_${prov}_key`);
+    if (!useDefault && hasByok) {
+      return prov === "nvidia" ? "Your NVIDIA NIM key is working..." : "Your OpenRouter key is working...";
+    }
+    return "Default NVIDIA NIM is connecting..."; // NVIDIA tried first by default
+  }
+
   async function handleGenerate() {
     const err = validate();
     if (err) { setError(err); return; }
@@ -96,15 +108,27 @@ export default function Home() {
     setIsGenerating(true);
     setError(null);
     setGenerated(false);
+    setProviderStatus(null);
 
     let anySuccess = false;
 
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i];
-      setGeneratingStep(`Generating insights for chart ${i + 1} of ${blocks.length}...`);
+      const loadingLabel = getProviderLoadingLabel();
+      setGeneratingStep(`Chart ${i + 1}/${blocks.length} — ${loadingLabel}`);
       setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, isGeneratingInsights: true } : b));
       try {
         const updates = await generateInsightsFromServer(block);
+        // Show which provider succeeded (from _provider / _keyType in response)
+        const prov    = (updates as { _provider?: string })._provider;
+        const keyType = (updates as { _keyType?: string })._keyType;
+        if (prov) {
+          const label = prov === "nvidia" ? "NVIDIA NIM" : "OpenRouter";
+          setProviderStatus({
+            label: keyType === "byok" ? `Your ${label} key` : `Default ${label}`,
+            keyType: keyType || "default",
+          });
+        }
         setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, ...updates, isGeneratingInsights: false } : b));
         anySuccess = true;
       } catch (e: unknown) {
@@ -117,11 +141,10 @@ export default function Home() {
     if (!anySuccess) {
       setIsGenerating(false);
       setGeneratingStep("");
-      return; // don't show empty preview
+      return;
     }
 
     setGeneratingStep("Building slide preview...");
-    // Give Chart.js time to fully render before showing the preview
     await new Promise(r => setTimeout(r, 1200));
 
     setIsGenerating(false);
@@ -223,11 +246,24 @@ export default function Home() {
         {/* Post-generation: slide preview + actions */}
         {generated && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
-            {/* Success badge + re-generate */}
+            {/* Success badge + provider chip + re-generate */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 600, color: "#059669" }}>
-                <CheckCircle2 size={16} />
-                Slide generated
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 600, color: "#059669" }}>
+                  <CheckCircle2 size={16} />
+                  Slide generated
+                </div>
+                {providerStatus && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 5,
+                    background: "var(--brand-light-5)", border: "1px solid var(--brand-light-3)",
+                    borderRadius: 20, padding: "3px 10px",
+                    fontSize: 12, fontWeight: 600, color: "var(--brand-dark-2)",
+                  }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+                    {providerStatus.label} ✓
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setGenerated(false)}
@@ -282,9 +318,9 @@ export default function Home() {
               }}
             >
               {isExporting ? (
-                <><Loader2 size={16} className="animate-spin" /> Designing slide&hellip; (~30-60s)</>
+                <><Loader2 size={16} className="animate-spin" /> Building your PPT&hellip;</>
               ) : (
-                <><Download size={16} /> Download PPT</>
+                <><Download size={16} /> Download PPT — matches preview</>
               )}
             </button>
 
@@ -415,14 +451,17 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<Partia
     throw new Error((data.error ?? "Generation failed") + detail);
   }
   return {
-    insights: data.insights ?? [],
-    kpiTitle: data.kpiTitle ?? '',
-    kpiSubtitle: data.kpiSubtitle ?? '',
+    insights:       data.insights       ?? [],
+    kpiTitle:       data.kpiTitle       ?? '',
+    kpiSubtitle:    data.kpiSubtitle    ?? '',
     kpiDescription: data.kpiDescription ?? '',
-    kpiIcon: data.kpiIcon ?? '',
-    annotations: data.annotations ?? [],
-    source: data.source ?? '',
-    slideSubtitle: data.slideSubtitle ?? '',
+    kpiIcon:        data.kpiIcon        ?? '',
+    annotations:    data.annotations    ?? [],
+    source:         data.source         ?? '',
+    slideSubtitle:  data.slideSubtitle  ?? '',
+    // provider metadata (not stored in ChartBlock, only used by handleGenerate for status)
+    _provider: data._provider,
+    _keyType:  data._keyType,
   };
 }
 

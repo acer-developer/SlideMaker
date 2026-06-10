@@ -108,27 +108,35 @@ export async function POST(req: NextRequest) {
   const prompt = buildPrompt(safeDataRaw, context, instructions, chartType);
 
   // NVIDIA first — OpenRouter free tier is frequently rate-limited (429)
-  const attempts: Array<() => Promise<unknown>> = [
-    ...(apiKey && provider === "nvidia"     ? [() => callNvidia(apiKey, prompt)]                                         : []),
-    ...(apiKey && provider === "openrouter" ? [() => callOpenRouter(apiKey, prompt)]                                     : []),
-    ...(process.env.NVIDIA_API_KEY          ? [() => callNvidia(process.env.NVIDIA_API_KEY!, prompt)]                    : []),
-    ...(process.env.OPENROUTER_API_KEY      ? [() => callOpenRouter(process.env.OPENROUTER_API_KEY!, prompt)]            : []),
-    () => callNvidia(DEFAULT_NV, prompt),
-    () => callOpenRouter(DEFAULT_OR, prompt),
+  // Each attempt is labeled so we can tell the client which provider succeeded.
+  const labeled: Array<{ fn: () => Promise<unknown>; prov: string; keyType: string }> = [
+    ...(apiKey && provider === "nvidia"
+      ? [{ fn: () => callNvidia(apiKey, prompt),                              prov: "nvidia",      keyType: "byok"    }] : []),
+    ...(apiKey && provider === "openrouter"
+      ? [{ fn: () => callOpenRouter(apiKey, prompt),                          prov: "openrouter",  keyType: "byok"    }] : []),
+    ...(process.env.NVIDIA_API_KEY
+      ? [{ fn: () => callNvidia(process.env.NVIDIA_API_KEY!, prompt),         prov: "nvidia",      keyType: "default" }] : []),
+    ...(process.env.OPENROUTER_API_KEY
+      ? [{ fn: () => callOpenRouter(process.env.OPENROUTER_API_KEY!, prompt), prov: "openrouter",  keyType: "default" }] : []),
+    { fn: () => callNvidia(DEFAULT_NV, prompt),      prov: "nvidia",     keyType: "default" },
+    { fn: () => callOpenRouter(DEFAULT_OR, prompt),  prov: "openrouter", keyType: "default" },
   ];
 
   const errors: string[] = [];
-  for (const attempt of attempts) {
-    try { return NextResponse.json(await attempt()); }
-    catch (e) {
+  for (const { fn, prov, keyType } of labeled) {
+    try {
+      const result = await fn();
+      // Include which provider succeeded so the UI can show status
+      return NextResponse.json({ ...(result as object), _provider: prov, _keyType: keyType });
+    } catch (e) {
       const msg = (e as Error).message;
-      errors.push(msg);
-      console.error("AI attempt failed:", msg);
+      errors.push(`[${prov}] ${msg}`);
+      console.error(`AI attempt failed [${prov}]:`, msg);
     }
   }
 
   return NextResponse.json({
     error: "AI generation unavailable — all providers failed.",
-    details: errors,   // visible in network tab / error popup for debugging
+    details: errors,
   }, { status: 503 });
 }
