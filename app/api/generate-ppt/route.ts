@@ -54,6 +54,7 @@ function parsePPTSpec(text: string) {
           exhibitNum: e.exhibitNum || 1,
           title: clean(e.title as string),
           chartIndex: typeof e.chartIndex === "number" ? e.chartIndex : 0,
+          chartType: clean((e.chartType as string) || "bar"),
           kpi: e.kpi ? { icon: ci((e.kpi as Record<string,string>).icon || "📊"), title: clean((e.kpi as Record<string,string>).title), keyMetric: clean((e.kpi as Record<string,string>).keyMetric), description: clean((e.kpi as Record<string,string>).description) } : null,
           annotations: ((e.annotations || []) as Record<string,string>[]).slice(0,3).map(a => ({ period: clean(a.period), label: clean(a.label), description: clean(a.description), icon: ci(a.icon||"") })),
           insights: ((e.insights || []) as string[]).map(clean),
@@ -73,10 +74,17 @@ function buildPPTPrompt(blocks: Record<string,unknown>[]) {
   const layout = layoutMap[Math.min(count, 4)] || "single";
 
   const chartDesc = blocks.map((b, i) => {
-    const lines = [`CHART ${i+1}:`, `  Context: ${b.context||""}`, `  Type: ${b.chartType||"auto"}`, `  Data:\n${((b.dataRaw as string)||"").slice(0,500)}`];
-    if (b.kpiTitle)   lines.push(`  KPI: ${b.kpiTitle}`);
-    if ((b.insights as unknown[])?.length) lines.push(`  Insights: ${(b.insights as string[]).join(" | ")}`);
-    if (b.source)     lines.push(`  Source: ${b.source}`);
+    const userType = (b.chartType as string || "").trim();
+    const typeHint = userType && userType !== "auto"
+      ? `  User-selected type: ${userType} (use this unless data clearly suits another)`
+      : `  User-selected type: none — YOU must choose the best chart type for this data`;
+    const lines = [
+      `CHART ${i+1}:`,
+      `  Context: ${b.context||""}`,
+      typeHint,
+      `  Data:\n${((b.dataRaw as string)||"").slice(0,500)}`,
+    ];
+    if (b.source) lines.push(`  Source: ${b.source}`);
     return lines.join("\n");
   }).join("\n\n---\n\n");
 
@@ -89,11 +97,20 @@ function buildPPTPrompt(blocks: Record<string,unknown>[]) {
       ],`
     : `      "insights": ["15-20 word insight 1 for this chart", "insight 2"],`;
 
-  return `BCG slide spec generator. Return ONLY valid JSON, NO markdown:
+  return `BCG slide spec generator. Return ONLY valid JSON, NO markdown.
 
 LAYOUT: "${layout}" | CHARTS: ${count}
 
 ${chartDesc}
+
+CHART TYPE OPTIONS (pick the best fit per chart):
+- "bar"            : comparing categories, rankings, discrete groups
+- "line"           : trends over time, continuous data, multiple series over time
+- "area"           : cumulative trends, volume over time, stacked growth
+- "pie"            : part-of-whole with ≤6 slices, proportions/share
+- "doughnut"       : same as pie but with a hole — use for market share, composition
+- "scatter"        : correlation between two variables, distribution
+- "horizontal-bar" : long category labels, many categories, rankings
 
 {
   "layout": "${layout}",
@@ -101,13 +118,14 @@ ${chartDesc}
   "slideSubtitle": "1-2 sentences. No em dashes.",
   "exhibits": [{
     "exhibitNum": 1, "title": "Descriptive title", "chartIndex": 0,
+    "chartType": "bar",
 ${kpiBlock}
     "source": ""
-  }${count > 1 ? ` (repeat for all ${count} charts with correct chartIndex)` : ""}],
+  }${count > 1 ? ` (repeat for all ${count} charts with correct chartIndex and chartType)` : ""}],
   "takeaways": ["3-5 bullets. Use [[key terms]] in double brackets. 15-25 words each."]
 }
 
-RULES: No em dashes. 3 annotations per exhibit. kpi.title is a noun phrase only.`;
+RULES: No em dashes. 3 annotations per exhibit. kpi.title is a noun phrase only. chartType must be one of the options above.`;
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
