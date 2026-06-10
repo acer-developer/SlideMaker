@@ -46,6 +46,15 @@ export default function Home() {
     setHasKey(useDefault || !!localStorage.getItem(`slidemaker_${provider}_key`));
   }, []);
 
+  // Keep Render free-tier warm: ping /api/ping immediately on load, then every 10 min.
+  // This prevents the 60-90s cold-start delay for the first Generate request.
+  useEffect(() => {
+    const ping = () => fetch("/api/ping").catch(() => {});
+    ping(); // wake immediately when page opens
+    const id = setInterval(ping, 10 * 60 * 1000); // every 10 minutes
+    return () => clearInterval(id);
+  }, []);
+
   function handleSettingsSave() {
     const provider = localStorage.getItem("slidemaker_provider") || "openrouter";
     const useDefault = localStorage.getItem("slidemaker_use_default") === "true";
