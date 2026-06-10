@@ -3,25 +3,21 @@ import type { ChartBlock } from "./types";
 /**
  * generatePPT
  *
- * New flow (preview = download):
- *  1. Capture Chart.js canvas images directly from the SlideCanvas (id="slide-canvas-root").
- *     These are the EXACT pixels the user sees in the preview — no re-rendering.
- *  2. Build a slide spec from the already-generated blocks state (kpi, annotations,
- *     insights from step-1 AI) — NO second AI call.
- *  3. POST spec + captured images to /api/render-ppt.
- *  4. Server embeds the chart images into a pptxgenjs slide that matches SlideCanvas layout.
- *  5. Browser downloads the binary.
+ * Flow:
+ *  1. Build slide spec from blocks state (kpi, insights, annotations already
+ *     generated in step 1 — NO second AI call).
+ *  2. POST spec + raw chart data to /api/render-ppt.
+ *  3. Server renders native pptxgenjs charts (addChart) so they are fully
+ *     editable in PowerPoint. Layout mirrors SlideCanvas exactly.
+ *  4. Browser downloads the binary.
  */
 export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
-  // ── 1. Capture chart canvases from the slide preview ────────────────────
-  const chartImages = captureSlideChartImages();
-
-  // ── 2. Build spec from blocks (uses insights already generated in step 1) ─
+  // ── 1. Build spec from already-generated insights ──────────────────────
   const spec = buildSpecFromBlocks(blocks);
 
-  // ── 3. POST to render-ppt — pure render, no AI ───────────────────────────
+  // ── 2. POST to render-ppt (pure render, no AI) ─────────────────────────
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 60_000); // 60s — render only, no AI
+  const timeoutId  = setTimeout(() => controller.abort(), 60_000);
 
   let res: Response;
   try {
@@ -30,7 +26,6 @@ export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         spec,
-        chartImages,
         blocks: blocks.map(b => ({ dataRaw: b.dataRaw, chartType: b.chartType })),
       }),
       signal: controller.signal,
@@ -51,7 +46,7 @@ export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
     throw new Error(msg);
   }
 
-  // ── 4. Trigger download ───────────────────────────────────────────────────
+  // ── 3. Trigger browser download ────────────────────────────────────────
   const blob = await res.blob();
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");
@@ -63,40 +58,28 @@ export async function generatePPT(blocks: ChartBlock[]): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-/* ─── Capture Chart.js canvas images from SlideCanvas ───────────────────── */
-function captureSlideChartImages(): string[] {
-  const root = document.getElementById("slide-canvas-root");
-  if (!root) return [];
-  const canvases = root.querySelectorAll("canvas");
-  return Array.from(canvases).map(c => {
-    try { return (c as HTMLCanvasElement).toDataURL("image/png"); }
-    catch { return ""; }
-  }).filter(Boolean);
-}
-
-/* ─── Build slide spec from blocks state ────────────────────────────────── */
+/* ─── Build slide spec from blocks (uses AI insights from step 1) ────────── */
 function buildSpecFromBlocks(blocks: ChartBlock[]) {
   const count    = Math.min(blocks.length, 4);
   const layoutMap: Record<number, string> = {
     1: "single", 2: "stacked-2", 3: "grid-3", 4: "grid-4",
   };
-  const layout = layoutMap[count] || "single";
 
-  // Use first block's slideSubtitle + context for header
-  const first = blocks[0];
-  const slideTitle = (first?.context || "Data Analysis")
+  const first         = blocks[0];
+  const slideTitle    = (first?.context || "Data Analysis")
     .split(" ").slice(0, 7).join(" ")
     .toUpperCase();
   const slideSubtitle = first?.slideSubtitle || "";
 
   const exhibits = blocks.slice(0, 4).map((b, i) => ({
-    exhibitNum: i + 1,
-    title:      b.context.slice(0, 72) || `Chart ${i + 1}`,
-    chartIndex: i,
+    exhibitNum:  i + 1,
+    title:       b.context.slice(0, 72) || `Chart ${i + 1}`,
+    chartIndex:  i,
+    chartType:   b.chartType,
     kpi: b.kpiTitle ? {
-      icon:      b.kpiIcon      || "📊",
-      title:     b.kpiTitle,
-      keyMetric: b.kpiSubtitle  || "",
+      icon:        b.kpiIcon        || "📊",
+      title:       b.kpiTitle,
+      keyMetric:   b.kpiSubtitle    || "",
       description: b.kpiDescription || "",
     } : null,
     annotations: (b.annotations || []).slice(0, 3),
@@ -104,10 +87,16 @@ function buildSpecFromBlocks(blocks: ChartBlock[]) {
     source:      b.source || "",
   }));
 
-  // Key takeaways: first 2 insights from each block, up to 4 total
+  // Takeaways: first 2 insights from each block, up to 4 total
   const takeaways = blocks
     .flatMap(b => (b.insights || []).slice(0, 2))
     .slice(0, 4);
 
-  return { layout, slideTitle, slideSubtitle, exhibits, takeaways };
+  return {
+    layout: layoutMap[count] || "single",
+    slideTitle,
+    slideSubtitle,
+    exhibits,
+    takeaways,
+  };
 }
