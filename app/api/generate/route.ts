@@ -103,21 +103,32 @@ export async function POST(req: NextRequest) {
   if (!dataRaw || !context)
     return NextResponse.json({ error: "dataRaw and context are required" }, { status: 400 });
 
-  const prompt = buildPrompt(dataRaw, context, instructions, chartType);
+  // Truncate data to avoid token limit issues on free-tier models
+  const safeDataRaw = (dataRaw as string).slice(0, 2000);
+  const prompt = buildPrompt(safeDataRaw, context, instructions, chartType);
 
+  // NVIDIA first — OpenRouter free tier is frequently rate-limited (429)
   const attempts: Array<() => Promise<unknown>> = [
-    ...(apiKey && provider === "openrouter" ? [() => callOpenRouter(apiKey, prompt)] : []),
-    ...(apiKey && provider === "nvidia"     ? [() => callNvidia(apiKey, prompt)]     : []),
-    ...(process.env.OPENROUTER_API_KEY ? [() => callOpenRouter(process.env.OPENROUTER_API_KEY!, prompt)] : []),
-    ...(process.env.NVIDIA_API_KEY     ? [() => callNvidia(process.env.NVIDIA_API_KEY!, prompt)]         : []),
-    () => callOpenRouter(DEFAULT_OR, prompt),
+    ...(apiKey && provider === "nvidia"     ? [() => callNvidia(apiKey, prompt)]                                         : []),
+    ...(apiKey && provider === "openrouter" ? [() => callOpenRouter(apiKey, prompt)]                                     : []),
+    ...(process.env.NVIDIA_API_KEY          ? [() => callNvidia(process.env.NVIDIA_API_KEY!, prompt)]                    : []),
+    ...(process.env.OPENROUTER_API_KEY      ? [() => callOpenRouter(process.env.OPENROUTER_API_KEY!, prompt)]            : []),
     () => callNvidia(DEFAULT_NV, prompt),
+    () => callOpenRouter(DEFAULT_OR, prompt),
   ];
 
+  const errors: string[] = [];
   for (const attempt of attempts) {
     try { return NextResponse.json(await attempt()); }
-    catch (e) { console.error("AI attempt failed:", (e as Error).message); }
+    catch (e) {
+      const msg = (e as Error).message;
+      errors.push(msg);
+      console.error("AI attempt failed:", msg);
+    }
   }
 
-  return NextResponse.json({ error: "AI generation unavailable — all providers failed." }, { status: 503 });
+  return NextResponse.json({
+    error: "AI generation unavailable — all providers failed.",
+    details: errors,   // visible in network tab / error popup for debugging
+  }, { status: 503 });
 }

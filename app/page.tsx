@@ -408,7 +408,12 @@ async function generateInsightsFromServer(block: ChartBlockType): Promise<Partia
     }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? 'Generation failed');
+  if (!res.ok) {
+    const detail = Array.isArray(data.details) && data.details.length
+      ? `\n\nDetails: ${data.details.join(" | ")}`
+      : "";
+    throw new Error((data.error ?? "Generation failed") + detail);
+  }
   return {
     insights: data.insights ?? [],
     kpiTitle: data.kpiTitle ?? '',

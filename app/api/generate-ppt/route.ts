@@ -118,22 +118,28 @@ export async function POST(req: NextRequest) {
 
   const prompt = buildPPTPrompt(blocks as Record<string,unknown>[]);
 
+  // NVIDIA first — OpenRouter free tier is frequently rate-limited (429)
   const attempts: Array<() => Promise<string>> = [
-    ...(apiKey && provider === "openrouter" ? [() => callOpenRouterRaw(apiKey as string, prompt)] : []),
-    ...(apiKey && provider === "nvidia"     ? [() => callNvidiaRaw(apiKey as string, prompt)]     : []),
-    ...(process.env.OPENROUTER_API_KEY ? [() => callOpenRouterRaw(process.env.OPENROUTER_API_KEY!, prompt)] : []),
-    ...(process.env.NVIDIA_API_KEY     ? [() => callNvidiaRaw(process.env.NVIDIA_API_KEY!, prompt)]         : []),
-    () => callOpenRouterRaw(DEFAULT_OR, prompt),
+    ...(apiKey && provider === "nvidia"     ? [() => callNvidiaRaw(apiKey as string, prompt)]                            : []),
+    ...(apiKey && provider === "openrouter" ? [() => callOpenRouterRaw(apiKey as string, prompt)]                        : []),
+    ...(process.env.NVIDIA_API_KEY          ? [() => callNvidiaRaw(process.env.NVIDIA_API_KEY!, prompt)]                 : []),
+    ...(process.env.OPENROUTER_API_KEY      ? [() => callOpenRouterRaw(process.env.OPENROUTER_API_KEY!, prompt)]         : []),
     () => callNvidiaRaw(DEFAULT_NV, prompt),
+    () => callOpenRouterRaw(DEFAULT_OR, prompt),
   ];
 
+  const pptErrors: string[] = [];
   let rawText: string | null = null;
   for (const fn of attempts) {
     try { rawText = await fn(); if (rawText) break; }
-    catch (e) { console.error("PPT AI attempt failed:", (e as Error).message); }
+    catch (e) {
+      const msg = (e as Error).message;
+      pptErrors.push(msg);
+      console.error("PPT AI attempt failed:", msg);
+    }
   }
   if (!rawText)
-    return NextResponse.json({ error: "AI generation unavailable — all providers failed." }, { status: 503 });
+    return NextResponse.json({ error: "AI generation unavailable — all providers failed.", details: pptErrors }, { status: 503 });
 
   const spec = parsePPTSpec(rawText);
   console.log("PPT spec — layout:", spec.layout, "| exhibits:", spec.exhibits.length);
